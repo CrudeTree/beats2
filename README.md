@@ -4,3 +4,9 @@ the fly.
 
 ## Intended Users
 This is intended to be used by anyone who likes music.
+
+# [ ] Description
+# [ ] Intended Users
+# [ ] ERDs
+# [ ] Wireframes
+# [ ] User Stories
