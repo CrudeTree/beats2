@@ -6,11 +6,11 @@ the fly.
 This is intended to be used by anyone who likes music or by singers who would like the pitch of a
 song to be in their vocal range.
 
-[User Stories](docs/user-stories.md)
+####[User Stories](docs/user-stories.md)
 
-[Entity Relationship Diagram](docs/erd.md)
+####[Entity Relationship Diagram](docs/erd.md)
 
-[Wireframe Diagram](docs/wireframe.md)
+####[Wireframe Diagram](docs/wireframe.md)
 
 ## Milestone
 * [x] Description
