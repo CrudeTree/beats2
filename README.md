@@ -12,4 +12,4 @@ song to be in their vocal range.
 * [x] Description
 * [x] Intended Users &amp; User Stories
 * [x] ERDs
-* [ ] Wireframes
+* [x] Wireframes
