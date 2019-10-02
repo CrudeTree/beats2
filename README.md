@@ -10,6 +10,8 @@ song to be in their vocal range.
 
 [Entity Relationship Diagram](docs/erd.md)
 
+[Wireframe Diagram](docs/wireframe.md)
+
 ## Milestone
 * [x] Description
 * [x] Intended Users &amp; User Stories
