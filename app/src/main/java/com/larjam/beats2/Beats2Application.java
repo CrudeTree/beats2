@@ -14,9 +14,11 @@ public class Beats2Application extends Application {
     Beats2Database.setApplicationContext(this);
     final Beats2Database database = Beats2Database.getInstance();
     new Thread(new Runnable() {
-    @Override
-    public void run () { database.getAudioDao(); }
-  }).start();
+      @Override
+      public void run() {
+        database.getAudioDao().delete();
+      }
+    }).start();
   }
 
 }

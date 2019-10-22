@@ -89,19 +89,30 @@ public class Audio {
   @ColumnInfo(name = "audio_id")
   private long id;
 
+  @ColumnInfo(name = "user_id", index = true)
+  private long userId;
+
   @ColumnInfo(name = "song_id", index = true)
   private String songId;
 
   @ColumnInfo(name = "pitch_id", index = true)
   private int pitchId;
 
-  @NonNull
-  @ColumnInfo(index = true)
-  private Date created = new Date();
+//  @NonNull
+//  @ColumnInfo(index = true)
+//  private Date created = new Date();
+//
+//  @NonNull
+//  @ColumnInfo(index = true)
+//  private Date updated  = new Date();
 
-  @NonNull
-  @ColumnInfo(index = true)
-  private Date updated  = new Date();
+  public long getUserId() {
+    return userId;
+  }
+
+  public void setUserId(long userId) {
+    this.userId = userId;
+  }
 
   public long getId() {
     return id;
@@ -127,21 +138,21 @@ public class Audio {
     this.pitchId = pitchId;
   }
 
-  @NonNull
-  public Date getCreated() {
-    return created;
-  }
-
-  public void setCreated(@NonNull Date created) {
-    this.created = created;
-  }
-
-  @NonNull
-  public Date getUpdated() {
-    return updated;
-  }
-
-  public void setUpdated(@NonNull Date updated) {
-    this.updated = updated;
-  }
+//  @NonNull
+//  public Date getCreated() {
+//    return created;
+//  }
+//
+//  public void setCreated(@NonNull Date created) {
+//    this.created = created;
+//  }
+//
+//  @NonNull
+//  public Date getUpdated() {
+//    return updated;
+//  }
+//
+//  public void setUpdated(@NonNull Date updated) {
+//    this.updated = updated;
+//  }
 }

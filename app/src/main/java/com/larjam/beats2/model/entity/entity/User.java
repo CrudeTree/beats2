@@ -23,13 +23,13 @@ public class User {
   @ColumnInfo(name = "pitch_id", index = true)
   private int pitchId;
 
-  @NonNull
-  @ColumnInfo(index = true)
-  private Date create  = new Date();
-
-  @NonNull
-  @ColumnInfo(index = true)
-  private Date updated  = new Date();
+//  @NonNull
+//  @ColumnInfo(index = true)
+//  private Date create  = new Date();
+//
+//  @NonNull
+//  @ColumnInfo(index = true)
+//  private Date updated  = new Date();
 
   public long getId() {
     return id;
@@ -63,21 +63,21 @@ public class User {
     this.pitchId = pitchId;
   }
 
-  @NonNull
-  public Date getCreate() {
-    return create;
-  }
-
-  public void setCreate(@NonNull Date create) {
-    this.create = create;
-  }
-
-  @NonNull
-  public Date getUpdated() {
-    return updated;
-  }
-
-  public void setUpdated(@NonNull Date updated) {
-    this.updated = updated;
-  }
+//  @NonNull
+//  public Date getCreate() {
+//    return create;
+//  }
+//
+//  public void setCreate(@NonNull Date create) {
+//    this.create = create;
+//  }
+//
+//  @NonNull
+//  public Date getUpdated() {
+//    return updated;
+//  }
+//
+//  public void setUpdated(@NonNull Date updated) {
+//    this.updated = updated;
+//  }
 }

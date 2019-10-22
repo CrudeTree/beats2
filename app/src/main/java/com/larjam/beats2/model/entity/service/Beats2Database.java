@@ -15,7 +15,8 @@ import com.larjam.beats2.model.entity.entity.User;
     entities = {Audio.class, User.class},
     version = 1, exportSchema = true
 )
-@TypeConverters(Beats2Database.Converters.class)
+
+//@TypeConverters(Beats2Database.Converters.class)
 public abstract class Beats2Database extends RoomDatabase {
 
   protected Beats2Database() {}
@@ -40,35 +41,19 @@ public abstract class Beats2Database extends RoomDatabase {
 
     static {
       INSTANCE =
-          Room.databaseBuilder(applicationContext, Beats2Database.class, "Beats2_db").build();
+          Room.databaseBuilder(applicationContext, Beats2Database.class, "beats2_db").build();
     }
 
   }
 
-  public static class Converters {
-
-    @TypeConverter
-    public Boolean retainTempoToBoolean(Boolean tempoRetain) {
-      return tempoRetain;
-    }
-
-  }
+//  public static class Converters {
+//
+//    @TypeConverter
+//    public Boolean retainTempoToBoolean(Boolean tempoRetain) {
+//      return tempoRetain;
+//    }
+//
+//  }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
