@@ -14,13 +14,13 @@ public class User {
   @ColumnInfo(name = "user_id")
   private long id;
 
-  @ColumnInfo(name = "retainOriginalTempo_id", index = true)
+  @ColumnInfo(name = "retain_original_tempo_id", index = true)
   private boolean retainOriginalTempoId;
 
-  @ColumnInfo(name = "retainPitch_id", index = true)
+  @ColumnInfo(name = "retain_pitch_id", index = true)
   private boolean retainPitchId;
 
-  @ColumnInfo(name = "pitch_id", index = true)
+  @ColumnInfo(name = "user_pitch_id", index = true)
   private int pitchId;
 
 //  @NonNull

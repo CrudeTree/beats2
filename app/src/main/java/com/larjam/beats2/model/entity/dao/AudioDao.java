@@ -15,7 +15,7 @@ public interface AudioDao {
   @Insert
   List<Long> insert(Collection<Audio> song_id);
 
-  @Query("SELECT * FROM Audio WHERE pitch_id=:pitchId ORDER BY audio_id ASC")
+  @Query("SELECT * FROM Audio WHERE audio_pitch_id=:pitchId ORDER BY audio_id ASC")
   Audio getPitch(int pitchId);
 
   @Update

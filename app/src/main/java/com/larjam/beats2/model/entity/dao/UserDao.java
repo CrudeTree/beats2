@@ -14,13 +14,13 @@ public interface UserDao {
   @Insert
   List<Long> insert(Collection<User> user_id);
 
-  @Query("SELECT * FROM User WHERE retainOriginalTempo_id=:retainTempoId ORDER BY user_id ASC")
+  @Query("SELECT * FROM User WHERE retain_original_tempo_id=:retainTempoId ORDER BY user_id ASC")
   User getTempoSet(int retainTempoId);
 
-  @Query("SELECT * FROM User WHERE retainPitch_id=:retainPitchId ORDER BY user_id ASC")
+  @Query("SELECT * FROM User WHERE retain_pitch_id=:retainPitchId ORDER BY user_id ASC")
   User getPitchSet(int retainPitchId);
 
-  @Query("SELECT * FROM User WHERE pitch_id=:pitchId ORDER BY user_id ASC")
+  @Query("SELECT * FROM User WHERE user_pitch_id=:pitchId ORDER BY user_id ASC")
   User getPitch(int pitchId);
 
 

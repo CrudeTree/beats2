@@ -95,7 +95,7 @@ public class Audio {
   @ColumnInfo(name = "song_id", index = true)
   private String songId;
 
-  @ColumnInfo(name = "pitch_id", index = true)
+  @ColumnInfo(name = "audio_pitch_id", index = true)
   private int pitchId;
 
 //  @NonNull

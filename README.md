@@ -20,14 +20,17 @@ the fly.
 ## Technical Documentation
 * [DDL](docs/ddl.md)
 
-#### [User Stories](docs/user-stories.md)
+## Links
+* [User Stories](docs/user-stories.md)
 
-#### [Entity Relationship Diagram](docs/erd.md)
+* [Entity Relationship Diagram](docs/erd.md)
 
-#### [Wireframe Diagram](docs/wireframe.md)
+* [Wireframe Diagram](docs/wireframe.md)
 
 ## Milestone
 * [x] Description
 * [x] Intended Users &amp; User Stories
 * [x] ERDs
 * [x] Wireframes
+* [x] Database
+* [x] DDL
