@@ -17,6 +17,9 @@ the fly.
 * Singers who would like the pitch or tempo of a song changed.
 * Weight lifters who want music to match their pace.
 
+## Technical Documentation
+* [DDL](docs/ddl.md)
+
 #### [User Stories](docs/user-stories.md)
 
 #### [Entity Relationship Diagram](docs/erd.md)
