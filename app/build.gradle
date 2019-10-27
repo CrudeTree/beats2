@@ -24,6 +24,11 @@ android {
     packagingOptions {
         exclude 'META-INF/proguard/androidx-annotations.pro'
     }
+
+    compileOptions {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
 }
 
 dependencies {
@@ -35,9 +40,13 @@ dependencies {
 
     implementation 'com.google.android.material:material:1.0.0'
 
-    def room_version = "2.1.0"
+    def room_version = "2.2.0"
     implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version"
+
+    implementation('com.sdsmdg.harjot:croller:1.0.7') {
+        exclude group: 'com.android.support'
+    }
 
     implementation 'com.facebook.stetho:stetho:1.5.1'
 

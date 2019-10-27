@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:id="@+id/main_content"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   android:fitsSystemWindows="true"
-  tools:context="com.larjam.beats2.controller.MainActivity">
+  android:paddingBottom="20dp"
+  tools:context="com.larjam.beats2.controller.MainActivity"
+  >
 
   <androidx.viewpager.widget.ViewPager
     android:id="@+id/container"
@@ -20,7 +23,7 @@
     android:layout_height="wrap_content"
     android:paddingTop="@dimen/appbar_padding_top"
     android:theme="@style/AppTheme.AppBarOverlay"
-    >
+    tools:ignore="MissingConstraints">
 
     <androidx.appcompat.widget.Toolbar
       android:id="@+id/toolbar"
@@ -36,12 +39,174 @@
 
   </com.google.android.material.appbar.AppBarLayout>
 
-  <com.google.android.material.floatingactionbutton.FloatingActionButton
-    android:id="@+id/fab"
+  <com.sdsmdg.harjot.crollerTest.Croller
+    android:id="@+id/croller"
+    android:layout_marginTop="150dp"
+    android:layout_marginLeft="30dp"
+    android:layout_marginRight="30dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_centerInParent="false"
+    app:back_circle_radius="700"
+    app:back_circle_color="#00EEEEEE"
+    app:indicator_color="#0B3C49"
+    app:indicator_width="7"
+    app:is_continuous="false"
+    app:label=""
+    app:label_color="#0B3C49"
+    app:main_circle_color="#EEEEEE"
+    app:max="59"
+    app:progress="30"
+    android:rotation="0"
+    app:progress_primary_color="#0B3C49"
+    app:progress_secondary_stroke_width="8"
+    app:progress_secondary_color="#00FF00"
+    app:start_offset="20"
+    />
+
+  <Button
+    android:id="@+id/start"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="@dimen/fab_margin"
-    android:layout_gravity="end|bottom"
-    app:srcCompat="@android:drawable/ic_dialog_email"/>
+    android:background="@drawable/ic_play"
+    android:shadowColor="#000"
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"/>
+
+  <Button
+    android:id="@+id/fast_foward_button"
+    android:layout_width="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:layout_height="wrap_content"
+    android:background="@drawable/ic_fast_forward"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintLeft_toRightOf="@id/start"
+    app:layout_constraintRight_toRightOf="parent"
+    android:layout_marginRight="20dp"/>
+
+  <Button
+    android:id="@+id/rewind_button"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="20dp"
+    android:background="@drawable/ic_rewind"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toLeftOf="@id/start"/>
+
+  <TextView
+    android:id="@+id/example_song"
+    android:text="Pumped Up Kicks - Foster..."
+    android:textStyle="bold"
+    android:textSize="24sp"
+    android:textColor="#0B3C49"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="15dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintBottom_toTopOf="@id/progressBar"
+    app:layout_constraintRight_toRightOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"/>
+
+  <TextView
+    android:id="@+id/text_pitch"
+    android:text="Pitch"
+    android:textStyle="bold"
+    android:textSize="24sp"
+    android:textColor="#0B3C49"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintRight_toRightOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"
+    android:layout_marginTop="100dp"/>
+
+  <TextView
+    android:id="@+id/add"
+    android:background="@drawable/ic_add"
+    android:textSize="24sp"
+    android:height="10dp"
+    android:textStyle="bold"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="360dp"
+    app:layout_constraintLeft_toRightOf="@id/text_pitch"
+    app:layout_constraintTop_toTopOf="parent"
+    />
+
+  <TextView
+    android:id="@+id/subtract"
+    android:background="@drawable/ic_subtract"
+    android:textSize="24sp"
+    android:height="10dp"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="360dp"
+    app:layout_constraintRight_toLeftOf="@id/text_pitch"
+    app:layout_constraintTop_toTopOf="parent"
+    />
+
+  <ProgressBar
+    android:id="@+id/progressBar"
+    style="?android:attr/progressBarStyleHorizontal"
+    android:minWidth="350dp"
+    android:minHeight="30dp"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    tools:layout_editor_absoluteX="181dp"
+    tools:layout_editor_absoluteY="154dp"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"
+    android:layout_marginTop="110dp"/>
+
+  <Switch
+    android:id="@+id/original_tempo"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Original Tempo"
+    android:textSize="16sp"
+    android:textStyle="bold"
+    android:textColor="@color/colorPrimary"
+    tools:layout_editor_absoluteX="37dp"
+    tools:layout_editor_absoluteY="213dp"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"
+    android:layout_marginTop="160dp"/>
+
+  <Switch
+    android:id="@+id/save_settings"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Keep Settings"
+    android:textColor="@color/colorPrimary"
+    android:textSize="16sp"
+    android:textStyle="bold"
+    tools:layout_editor_absoluteX="16dp"
+    tools:layout_editor_absoluteY="260dp"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintRight_toRightOf="parent"
+    android:layout_marginTop="160dp"/>
+
+  <ImageView
+    android:id="@+id/imageView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:minHeight="280dp"
+    android:minWidth="280dp"
+    app:srcCompat="@drawable/ic_ring"
+    tools:layout_editor_absoluteX="121dp"
+    tools:layout_editor_absoluteY="293dp"
+    app:layout_constraintBottom_toBottomOf="@id/croller"
+    app:layout_constraintTop_toTopOf="@id/croller"
+    app:layout_constraintRight_toRightOf="@id/croller"
+    app:layout_constraintLeft_toLeftOf="@id/croller"
+    />
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
