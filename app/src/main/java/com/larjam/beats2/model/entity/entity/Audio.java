@@ -21,7 +21,9 @@ package com.larjam.beats2.model.entity.entity;
    *  for credits and info, see README.
    *
    */
+import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
