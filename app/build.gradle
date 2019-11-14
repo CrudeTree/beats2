@@ -3,12 +3,15 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 29
     defaultConfig {
-        applicationId "edu.cnm.deepdive.beats2"
+        applicationId "com.larjam.beats2"
         minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "BASE_URL", '"http://10.46.2.228:8080/beats2/"'
+        buildConfigField "String", "CLIENT_ID", '"157693217097-9q8kju8oj0aqjfhl1vdl0baqgbg2pann.apps.googleusercontent.com"'
+
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
@@ -37,7 +40,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.1.0'
-
+    implementation 'com.google.android.gms:play-services-auth:17.0.0'
     implementation 'com.google.android.material:material:1.0.0'
 
     def room_version = "2.2.1"
@@ -47,9 +50,7 @@ dependencies {
     implementation('com.sdsmdg.harjot:croller:1.0.7') {
         exclude group: 'com.android.support'
     }
-
     implementation 'com.facebook.stetho:stetho:1.5.1'
-
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'

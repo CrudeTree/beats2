@@ -9,6 +9,7 @@ public class Beats2Application extends Application {
   @Override
   public void onCreate() {
     super.onCreate();
+    GoogleSignInService.setApplicationContext(this);
     Stetho.initializeWithDefaults(this);
 
     Beats2Database.setApplicationContext(this);
