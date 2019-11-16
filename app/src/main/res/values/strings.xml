@@ -22,4 +22,6 @@
   <string name="original_tempo">Original Tempo</string>
   <string name="keep_settings">Keep Settings</string>
   <string name="title_activity_tarsos_test">TarsosTest</string>
+  <string name="title_activity_settings">Settings</string>
+  <string name="settings">Settings</string>
 </resources>

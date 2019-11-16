@@ -11,6 +11,11 @@
     android:supportsRtl="true"
     android:theme="@style/AppTheme">
     <activity
+      android:label="@string/title_activity_settings"
+      android:name=".controller.SettingsActivity"
+      android:theme="@style/AppTheme.NoActionBar">
+    </activity>
+    <activity
       android:label="@string/title_activity_tarsos_test"
       android:name=".controller.TarsosTest"
       android:theme="@style/AppTheme.NoActionBar">

@@ -1,27 +1,34 @@
 package com.larjam.beats2.controller;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore.Audio.Media;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import android.view.View;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
@@ -29,20 +36,12 @@ import be.tarsos.dsp.PitchShifter;
 import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 
-import be.tarsos.dsp.pitch.PitchDetectionHandler;
-import be.tarsos.dsp.pitch.PitchDetectionResult;
-import be.tarsos.dsp.pitch.PitchProcessor;
-import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
-
-import be.tarsos.dsp.resample.RateTransposer;
 import be.tarsos.dsp.resample.Resampler;
+import com.google.android.material.appbar.AppBarLayout;
 import com.larjam.beats2.GoogleSignInService;
 import com.larjam.beats2.R;
 import com.larjam.beats2.viewmodel.MainViewModel;
 import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -66,11 +65,20 @@ public class PlayerActivity extends AppCompatActivity {
   private PitchShifter pitchShifter;
   private float[] buffer;
   private AudioDispatcher dispatcher;
+  private File file;
+  private AppBarLayout appBarColor;
+  private Toolbar toolbarColor;
+  private TextView pitchText;
+  private TextView originalTempoText;
+  private TextView keepSettingsText;
+  private Button ic_play;
+
+  private int red;
+  private int blue;
+  private int green;
 
 
-  static {
-  }
-
+  @SuppressLint("ResourceType")
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -92,14 +100,21 @@ public class PlayerActivity extends AppCompatActivity {
       }
 
     } else {
-      uri = Uri.parse("/storage/0EBB-01CB/MySongList/Pumped up Kicks- Foster The People.mp3");
-
+      uri = Uri.parse("/storage/0EBB-01CB/MySongList/10,000 pesos.mp3");
+      file = new File(String.valueOf(uri));
     }
 
-    startFile(new File(String.valueOf(uri)));
+//    Log.d(LOG_TAG, "URIValue: " + String.valueOf(file));
+//    Log.d(LOG_TAG, "URILength: " + file.length());
+//    Log.d(LOG_TAG, "URIExist: " + file.exists());
+//    Log.d(LOG_TAG, "URIExecute: " + file.canExecute());
+//    startFile(file);
 
     songIndex = arrayList.indexOf(uri.toString());
-
+    ic_play = findViewById(R.drawable.ic_play);
+    pitchText = findViewById(R.id.text_pitch);
+    originalTempoText = findViewById(R.id.original_tempo);
+    keepSettingsText = findViewById(R.id.save_settings);
     displaySongIdentifier = findViewById(R.id.display_song_name);
     displaySongIdentifier.setText(title);
 
@@ -113,6 +128,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     player = MediaPlayer.create(this, uri);
     mPlayButton.setOnClickListener(this::play);
+    colorPreference();
 
     seekBar = findViewById(R.id.seek_bar);
     player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -141,19 +157,31 @@ public class PlayerActivity extends AppCompatActivity {
       }
     });
     Bundle extras;
-    if((extras = intent.getExtras())!=null){
-      if (extras.getBoolean("start")){
+    if ((extras = intent.getExtras()) != null) {
+      if (extras.getBoolean("start")) {
         play(mPlayButton);
       }
     }
 
   }
 
+  private void colorPreference() {
+    SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
+    Editor editor = pref.edit();
+    red = pref.getInt("red", 11);
+    green = pref.getInt("green", 60);
+    blue = pref.getInt("blue", 73);
+    Log.d(LOG_TAG, "GREEN " + green);
+    toolbarColor = findViewById(R.id.toolbar);
+    appBarColor = findViewById(R.id.appbar);
 
-
-
-
-
+    originalTempoText.setTextColor(Color.rgb(red, green, blue));
+    keepSettingsText.setTextColor(Color.rgb(red,green,blue));
+    displaySongIdentifier.setTextColor(Color.rgb(red, green, blue));
+    pitchText.setTextColor(Color.rgb(red, green, blue));
+    toolbarColor.setBackgroundColor(Color.rgb(red, green, blue));
+    appBarColor.setBackgroundColor(Color.rgb(red, green, blue));
+  }
 
 
   private void startFile(File file) {
@@ -162,8 +190,9 @@ public class PlayerActivity extends AppCompatActivity {
     final int overlap = 2048 - 128;
     int samplerate = 44100;
     new AndroidFFMPEGLocator(this);
-    final AudioDispatcher d = AudioDispatcherFactory.fromPipe(file.getAbsolutePath(), samplerate, size, overlap);
-    pitchShifter = new PitchShifter(1.0/currentFactor, samplerate, size, overlap);
+    final AudioDispatcher d = AudioDispatcherFactory
+        .fromPipe(file.getAbsolutePath(), samplerate, size, overlap);
+    pitchShifter = new PitchShifter(1.0 / currentFactor, samplerate, size, overlap);
 
     d.addAudioProcessor(new AudioProcessor() {
       @Override
@@ -182,7 +211,8 @@ public class PlayerActivity extends AppCompatActivity {
     d.addAudioProcessor(pitchShifter);
 
     d.addAudioProcessor(new AudioProcessor() {
-      Resampler r= new Resampler(false,0.1,4.0);
+      Resampler r = new Resampler(false, 0.1, 4.0);
+
       @Override
       public void processingFinished() {
       }
@@ -192,8 +222,8 @@ public class PlayerActivity extends AppCompatActivity {
 
         float factor = (float) (currentFactor);
         float[] src = audioEvent.getFloatBuffer();
-        float[] out = new float[(int) ((size-overlap) * factor)];
-        r.process(factor, src, overlap,size-overlap, false, out, 0, out.length);
+        float[] out = new float[(int) ((size - overlap) * factor)];
+        r.process(factor, src, overlap, size - overlap, false, out, 0, out.length);
         //The size of the output buffer changes (according to factor).
         d.setStepSizeAndOverlap(out.length, 0);
 
@@ -224,16 +254,10 @@ public class PlayerActivity extends AppCompatActivity {
         return true;
       }
     });
-    dispatcher = d ;
+    dispatcher = d;
     new Thread(d).start();
 
   }
-
-
-
-
-
-
 
 
   private void changeSeekbar() {
@@ -270,11 +294,14 @@ public class PlayerActivity extends AppCompatActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
     boolean handled = true;
     switch (item.getItemId()) {
-      case R.id.action_settings:
+      case R.id.playlist:
         openSongListActivity();
         break;
       case R.id.sign_out:
         signOut();
+        break;
+      case R.id.settings:
+        openSettingsActivity();
         break;
       default:
         handled = super.onOptionsItemSelected(item);
@@ -284,6 +311,11 @@ public class PlayerActivity extends AppCompatActivity {
 
   public void openSongListActivity() {
     Intent intent = new Intent(this, SongListActivity.class);
+    startActivity(intent);
+  }
+
+  public void openSettingsActivity() {
+    Intent intent = new Intent(this, SettingsActivity.class);
     startActivity(intent);
   }
 
@@ -317,10 +349,10 @@ public class PlayerActivity extends AppCompatActivity {
   }
 
   private void nextSong(View view) {
-    songIndex+=1;
+    songIndex += 1;
     songIndex %= arrayList.size();
 
-    File f  = new File(arrayList.get(songIndex));
+    File f = new File(arrayList.get(songIndex));
     System.out.println(arrayList.get(songIndex));
     Intent intent = new Intent(this, PlayerActivity.class);
     Bundle extras = new Bundle();
