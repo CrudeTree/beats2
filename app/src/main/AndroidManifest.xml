@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="com.larjam.beats2">
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
   <application
-    android:name=".Beats2Application"
     android:allowBackup="true"
     android:icon="@mipmap/ic_launcher"
     android:label="@string/app_name"
+    android:name=".Beats2Application"
     android:roundIcon="@mipmap/ic_launcher_round"
     android:supportsRtl="true"
     android:theme="@style/AppTheme">
+    <activity
+      android:label="@string/title_activity_tarsos_test"
+      android:name=".controller.TarsosTest"
+      android:theme="@style/AppTheme.NoActionBar">
+    </activity>
     <activity
       android:label="Beats2"
       android:name=".controller.PlayerActivity"
@@ -28,5 +32,7 @@
       </intent-filter>
     </activity>
   </application>
+
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
 </manifest>

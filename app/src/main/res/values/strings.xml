@@ -21,4 +21,5 @@
   <string name="pitch">Pitch</string>
   <string name="original_tempo">Original Tempo</string>
   <string name="keep_settings">Keep Settings</string>
+  <string name="title_activity_tarsos_test">TarsosTest</string>
 </resources>
