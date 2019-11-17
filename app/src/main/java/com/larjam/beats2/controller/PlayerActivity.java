@@ -2,6 +2,7 @@ package com.larjam.beats2.controller;
 
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -144,6 +145,21 @@ public class PlayerActivity extends AppCompatActivity {
         if (b) {
           player.seekTo(i);
         }
+
+        if (seekBar.getProgress() > player.getDuration() * .985) {
+          songIndex += 1;
+          songIndex %= arrayList.size();
+
+          File f = new File(arrayList.get(songIndex));
+          System.out.println(arrayList.get(songIndex));
+          Intent intent = new Intent(PlayerActivity.this, PlayerActivity.class);
+          Bundle extras = new Bundle();
+          extras.putString("data", arrayList.get(songIndex));
+          extras.putString("title", f.getAbsoluteFile().getName());
+          extras.putBoolean("start", true);
+          intent.putExtras(extras);
+          startActivity(intent);
+        }
       }
 
       @Override
@@ -176,7 +192,7 @@ public class PlayerActivity extends AppCompatActivity {
     appBarColor = findViewById(R.id.appbar);
 
     originalTempoText.setTextColor(Color.rgb(red, green, blue));
-    keepSettingsText.setTextColor(Color.rgb(red,green,blue));
+    keepSettingsText.setTextColor(Color.rgb(red, green, blue));
     displaySongIdentifier.setTextColor(Color.rgb(red, green, blue));
     pitchText.setTextColor(Color.rgb(red, green, blue));
     toolbarColor.setBackgroundColor(Color.rgb(red, green, blue));
@@ -395,13 +411,12 @@ public class PlayerActivity extends AppCompatActivity {
     super.onResume();
 
   }
-  //
-//  public static PlayerActivity newInstance(Uri uri){
-//    Bundle args = new Bundle();
-//    if (uri != null){
-//      args.putSerializable("uri", (Serializable) uri);
-//    }
-//    PlayerActivity playerActivity = new PlayerActivity(args);
-//    return playerActivity;
-//  }
+
+  @Override
+  public void onBackPressed() {
+    System.out.println("BackButtonPuhsed");
+    finish();
+  }
+
+
 }
