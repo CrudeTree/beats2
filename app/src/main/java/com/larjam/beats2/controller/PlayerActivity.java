@@ -73,6 +73,7 @@ public class PlayerActivity extends AppCompatActivity {
   private TextView originalTempoText;
   private TextView keepSettingsText;
   private Button ic_play;
+  private MediaPlayer mp;
 
   private int red;
   private int blue;
@@ -88,6 +89,8 @@ public class PlayerActivity extends AppCompatActivity {
     Intent intent = getIntent();
     listView = findViewById(R.id.listView);
     arrayList = new ArrayList<>();
+    mp = MediaPlayer.create(this, R.raw.click_sound);
+    mp.setVolume(0.2f,0.2f);
     getMusic();
     String title = "Pumped up Kicks - Foster The People.mp3";
     mNextButton = findViewById(R.id.next_button);
@@ -311,12 +314,15 @@ public class PlayerActivity extends AppCompatActivity {
     boolean handled = true;
     switch (item.getItemId()) {
       case R.id.playlist:
+        mp.start();
         openSongListActivity();
         break;
       case R.id.sign_out:
+        mp.start();
         signOut();
         break;
       case R.id.settings:
+        mp.start();
         openSettingsActivity();
         break;
       default:
@@ -351,8 +357,8 @@ public class PlayerActivity extends AppCompatActivity {
 
   // Plays the song
   public void play(View v) {
+    mp.start();
     if (!isPlay) {
-      Log.d(LOG_TAG, String.valueOf(R.raw.song));
       v.setBackgroundResource(R.drawable.ic_pause);
       player.setOnCompletionListener(mediaPlayer -> stopPlayer());
       player.start();
@@ -365,6 +371,7 @@ public class PlayerActivity extends AppCompatActivity {
   }
 
   private void nextSong(View view) {
+    mp.start();
     songIndex += 1;
     songIndex %= arrayList.size();
 
