@@ -105,8 +105,8 @@ public class PlayerActivity extends AppCompatActivity {
       }
     } else {
       doStuff();
+      songIndex = arrayList.indexOf(uri.toString());
     }
-    songIndex = arrayList.indexOf(uri.toString());
 
 
   }
