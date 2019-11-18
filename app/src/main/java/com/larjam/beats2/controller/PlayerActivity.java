@@ -1,11 +1,13 @@
 package com.larjam.beats2.controller;
 
+import android.Manifest.permission;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -23,10 +25,14 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import android.view.View;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
@@ -74,24 +80,44 @@ public class PlayerActivity extends AppCompatActivity {
   private TextView keepSettingsText;
   private Button ic_play;
   private MediaPlayer mp;
+  private static final int MY_PERMISSION_REQUEST = 1;
+
 
   private int red;
   private int blue;
   private int green;
 
-
-  @SuppressLint("ResourceType")
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_player);
+
+
+    if (ContextCompat.checkSelfPermission(PlayerActivity.this,
+        permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+      if (ActivityCompat.shouldShowRequestPermissionRationale(PlayerActivity.this,
+          permission.READ_EXTERNAL_STORAGE)) {
+        ActivityCompat.requestPermissions(PlayerActivity.this,
+            new String[]{permission.READ_EXTERNAL_STORAGE}, MY_PERMISSION_REQUEST);
+      } else {
+        ActivityCompat.requestPermissions(PlayerActivity.this,
+            new String[]{permission.READ_EXTERNAL_STORAGE}, MY_PERMISSION_REQUEST);
+      }
+    } else {
+      doStuff();
+    }
+    songIndex = arrayList.indexOf(uri.toString());
+
+
+  }
+
+  public void doStuff() {
     handler = new Handler();
     Intent intent = getIntent();
     listView = findViewById(R.id.listView);
     arrayList = new ArrayList<>();
     mp = MediaPlayer.create(this, R.raw.click_sound);
     mp.setVolume(0.2f,0.2f);
-    getMusic();
     String title = "Pumped up Kicks - Foster The People.mp3";
     mNextButton = findViewById(R.id.next_button);
     mNextButton.setOnClickListener(this::nextSong);
@@ -114,8 +140,6 @@ public class PlayerActivity extends AppCompatActivity {
 //    Log.d(LOG_TAG, "URIExecute: " + file.canExecute());
 //    startFile(file);
 
-    songIndex = arrayList.indexOf(uri.toString());
-    ic_play = findViewById(R.drawable.ic_play);
     pitchText = findViewById(R.id.text_pitch);
     originalTempoText = findViewById(R.id.original_tempo);
     keepSettingsText = findViewById(R.id.save_settings);
@@ -126,22 +150,19 @@ public class PlayerActivity extends AppCompatActivity {
     setSupportActionBar(toolbar);
     mPlayButton = findViewById(R.id.play);
     setupSignIn();
-
+    getMusic();
     viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
     Log.d(LOG_TAG, "onCreate");
 
     player = MediaPlayer.create(this, uri);
     mPlayButton.setOnClickListener(this::play);
     colorPreference();
-
-    seekBar = findViewById(R.id.seek_bar);
-    player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-      @Override
-      public void onPrepared(MediaPlayer player) {
-        seekBar.setMax(player.getDuration());
-        changeSeekbar();
-      }
+    player.setOnPreparedListener(player -> {
+      seekBar.setMax(player.getDuration());
+      changeSeekbar();
     });
+    seekBar = findViewById(R.id.seek_bar);
+
     seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -163,6 +184,7 @@ public class PlayerActivity extends AppCompatActivity {
           intent.putExtras(extras);
           startActivity(intent);
         }
+
       }
 
       @Override
@@ -175,13 +197,13 @@ public class PlayerActivity extends AppCompatActivity {
 
       }
     });
+
     Bundle extras;
     if ((extras = intent.getExtras()) != null) {
       if (extras.getBoolean("start")) {
         play(mPlayButton);
       }
     }
-
   }
 
   private void colorPreference() {
@@ -333,12 +355,38 @@ public class PlayerActivity extends AppCompatActivity {
 
   public void openSongListActivity() {
     Intent intent = new Intent(this, SongListActivity.class);
+    Bundle extras = new Bundle();
+    extras.putInt("songIndex", songIndex);
+    intent.putExtras(extras);
     startActivity(intent);
   }
 
   public void openSettingsActivity() {
     Intent intent = new Intent(this, SettingsActivity.class);
+    Bundle extras = new Bundle();
+    extras.putInt("songIndex", songIndex);
+    intent.putExtras(extras);
     startActivity(intent);
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+      @NonNull int[] grantResults) {
+    switch (requestCode) {
+      case MY_PERMISSION_REQUEST: {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+          if (ContextCompat.checkSelfPermission(PlayerActivity.this,
+              permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
+            doStuff();
+          }
+        } else {
+          Toast.makeText(this, "No permission granted", Toast.LENGTH_SHORT).show();
+          finish();
+        }
+        return;
+      }
+    }
   }
 
   public void getMusic() {
@@ -381,6 +429,7 @@ public class PlayerActivity extends AppCompatActivity {
     Bundle extras = new Bundle();
     extras.putString("data", arrayList.get(songIndex));
     extras.putString("title", f.getAbsoluteFile().getName());
+    extras.putInt("songIndex", songIndex);
     extras.putBoolean("start", true);
     intent.putExtras(extras);
     startActivity(intent);

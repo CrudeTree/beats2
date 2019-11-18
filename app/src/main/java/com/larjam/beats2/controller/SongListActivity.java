@@ -29,10 +29,11 @@ public class SongListActivity extends FragmentActivity {
 
   private static final int MY_PERMISSION_REQUEST = 1;
   private ArrayList<String> arrayList;
-  private ArrayList<String> titleList;
   private ListView listView;
   private ArrayAdapter<String> adapter;
   private MainViewModel viewModel;
+  private int songIndex;
+
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +41,6 @@ public class SongListActivity extends FragmentActivity {
     setContentView(R.layout.activity_song_list);
 
     viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
-    getLifecycle().addObserver(viewModel);
 
     if (ContextCompat.checkSelfPermission(SongListActivity.this,
         permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -112,4 +112,17 @@ public class SongListActivity extends FragmentActivity {
     }
   }
 
+  @Override
+  public void onBackPressed() {
+    Intent intent = new Intent(this, PlayerActivity.class);
+    Bundle extras = intent.getExtras();
+    System.out.println("EXTRAS" + extras);
+    if (extras != null) {
+      songIndex = extras.getInt("songIndex", songIndex);
+    }
+    System.out.println("SONGINDEX" + songIndex);
+
+    intent.putExtra("songIndex", songIndex);
+    startActivity(new Intent(this, PlayerActivity.class));
+  }
 }
