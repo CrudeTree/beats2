@@ -24,4 +24,7 @@
   <string name="title_activity_tarsos_test">TarsosTest</string>
   <string name="title_activity_settings">Settings</string>
   <string name="settings">Settings</string>
+  <string name="title_activity_front_colors_settings">FrontColorsSettingsActivity</string>
+  <string name="title_activity_back_colors_settings">BackColorsSettingsActivity</string>
+  <string name="title_activity_file_settings">FileSettingsActivity</string>
 </resources>

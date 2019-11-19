@@ -1,16 +1,13 @@
 package com.larjam.beats2.controller;
 
 import android.Manifest.permission;
-import android.annotation.SuppressLint;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,7 +17,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
@@ -28,22 +24,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import android.view.View;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.lifecycle.ViewModelProviders;
-import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
 import be.tarsos.dsp.PitchShifter;
+import be.tarsos.dsp.io.android.AndroidAudioPlayer;
 import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 
-import be.tarsos.dsp.resample.Resampler;
 import com.google.android.material.appbar.AppBarLayout;
 import com.larjam.beats2.GoogleSignInService;
 import com.larjam.beats2.R;
@@ -54,9 +47,10 @@ import java.util.Arrays;
 
 public class PlayerActivity extends AppCompatActivity {
 
-  private static final String LOG_TAG = "PlayerActivity";
+  private static final String TAG = "PlayerActivity";
   private GoogleSignInService signInService;
   private boolean isPlay = false;
+  private boolean loop;
   private Button mPlayButton;
   private Button mNextButton;
   private MediaPlayer player;
@@ -80,7 +74,6 @@ public class PlayerActivity extends AppCompatActivity {
   private TextView keepSettingsText;
   private Button ic_play;
   private MediaPlayer mp;
-  private static final int MY_PERMISSION_REQUEST = 1;
 
 
   private int red;
@@ -92,26 +85,6 @@ public class PlayerActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_player);
 
-
-    if (ContextCompat.checkSelfPermission(PlayerActivity.this,
-        permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-      if (ActivityCompat.shouldShowRequestPermissionRationale(PlayerActivity.this,
-          permission.READ_EXTERNAL_STORAGE)) {
-        ActivityCompat.requestPermissions(PlayerActivity.this,
-            new String[]{permission.READ_EXTERNAL_STORAGE}, MY_PERMISSION_REQUEST);
-      } else {
-        ActivityCompat.requestPermissions(PlayerActivity.this,
-            new String[]{permission.READ_EXTERNAL_STORAGE}, MY_PERMISSION_REQUEST);
-      }
-    } else {
-      doStuff();
-      songIndex = arrayList.indexOf(uri.toString());
-    }
-
-
-  }
-
-  public void doStuff() {
     handler = new Handler();
     Intent intent = getIntent();
     listView = findViewById(R.id.listView);
@@ -128,9 +101,8 @@ public class PlayerActivity extends AppCompatActivity {
       if (extras != null && extras.getString("title") != null) {
         title = extras.getString("title");
       }
-
     } else {
-      uri = Uri.parse("/storage/0EBB-01CB/MySongList/10,000 pesos.mp3");
+      uri = Uri.parse("/storage/emulated/0/MySongList/10,000 pesos.mp3");
       file = new File(String.valueOf(uri));
     }
 
@@ -138,7 +110,6 @@ public class PlayerActivity extends AppCompatActivity {
 //    Log.d(LOG_TAG, "URILength: " + file.length());
 //    Log.d(LOG_TAG, "URIExist: " + file.exists());
 //    Log.d(LOG_TAG, "URIExecute: " + file.canExecute());
-//    startFile(file);
 
     pitchText = findViewById(R.id.text_pitch);
     originalTempoText = findViewById(R.id.original_tempo);
@@ -152,11 +123,14 @@ public class PlayerActivity extends AppCompatActivity {
     setupSignIn();
     getMusic();
     viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
-    Log.d(LOG_TAG, "onCreate");
+    Log.d(TAG, "onCreate");
 
     player = MediaPlayer.create(this, uri);
     mPlayButton.setOnClickListener(this::play);
+//    startFile(file);
+
     colorPreference();
+
     player.setOnPreparedListener(player -> {
       seekBar.setMax(player.getDuration());
       changeSeekbar();
@@ -165,17 +139,17 @@ public class PlayerActivity extends AppCompatActivity {
 
     seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
       @Override
-      public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-        if (b) {
+      public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
+        if (fromUser) {
           player.seekTo(i);
         }
 
-        if (seekBar.getProgress() > player.getDuration() * .985) {
+        if (seekBar.getProgress() >= player.getDuration() * 0.98) {
+          seekBar.setProgress(0);
           songIndex += 1;
           songIndex %= arrayList.size();
-
           File f = new File(arrayList.get(songIndex));
-          System.out.println(arrayList.get(songIndex));
+          Log.d(TAG, "NameOfFile" + f.getAbsoluteFile().getName());
           Intent intent = new Intent(PlayerActivity.this, PlayerActivity.class);
           Bundle extras = new Bundle();
           extras.putString("data", arrayList.get(songIndex));
@@ -212,7 +186,7 @@ public class PlayerActivity extends AppCompatActivity {
     red = pref.getInt("red", 11);
     green = pref.getInt("green", 60);
     blue = pref.getInt("blue", 73);
-    Log.d(LOG_TAG, "GREEN " + green);
+    Log.d(TAG, "GREEN " + green);
     toolbarColor = findViewById(R.id.toolbar);
     appBarColor = findViewById(R.id.appbar);
 
@@ -226,19 +200,18 @@ public class PlayerActivity extends AppCompatActivity {
 
 
   private void startFile(File file) {
-    int currentFactor = 10;
+    int currentFactor = 4;
     final int size = 2048;
     final int overlap = 2048 - 128;
     int samplerate = 44100;
     new AndroidFFMPEGLocator(this);
     final AudioDispatcher d = AudioDispatcherFactory
         .fromPipe(file.getAbsolutePath(), samplerate, size, overlap);
-    pitchShifter = new PitchShifter(1.0 / currentFactor, samplerate, size, overlap);
-
+    pitchShifter = new PitchShifter(2, samplerate, size, overlap);
+    pitchShifter.setPitchShiftFactor(2);
     d.addAudioProcessor(new AudioProcessor() {
       @Override
       public void processingFinished() {
-        // TODO Auto-generated method stub
 
       }
 
@@ -249,54 +222,59 @@ public class PlayerActivity extends AppCompatActivity {
       }
     });
 
-    d.addAudioProcessor(pitchShifter);
+    player = MediaPlayer.create(this, uri);
+    player.start();
 
-    d.addAudioProcessor(new AudioProcessor() {
-      Resampler r = new Resampler(false, 0.1, 4.0);
 
-      @Override
-      public void processingFinished() {
-      }
 
-      @Override
-      public boolean process(AudioEvent audioEvent) {
-
-        float factor = (float) (currentFactor);
-        float[] src = audioEvent.getFloatBuffer();
-        float[] out = new float[(int) ((size - overlap) * factor)];
-        r.process(factor, src, overlap, size - overlap, false, out, 0, out.length);
-        //The size of the output buffer changes (according to factor).
-        d.setStepSizeAndOverlap(out.length, 0);
-
-        audioEvent.setFloatBuffer(out);
-        audioEvent.setOverlap(0);
-
-        return true;
-      }
-    });
+//    d.addAudioProcessor(new AudioProcessor() {
+//      Resampler r = new Resampler(false, 0.1, 4.0);
+//
+//      @Override
+//      public void processingFinished() {
+//      }
+//
+//      @Override
+//      public boolean process(AudioEvent audioEvent) {
+//
+//        float factor = (float) (currentFactor);
+//        float[] src = audioEvent.getFloatBuffer();
+//        float[] out = new float[(int) ((size - overlap) * factor)];
+//        r.process(factor, src, overlap, size - overlap, false, out, 0, out.length);
+//        //The size of the output buffer changes (according to factor).
+//        d.setStepSizeAndOverlap(out.length, 0);
+//
+//        audioEvent.setFloatBuffer(out);
+//        audioEvent.setOverlap(0);
+//
+//        return true;
+//      }
+//    });
 //    d.addAudioProcessor(rateTransposer);
 //    try {
 //      d.addAudioProcessor(new AudioPlayer(d.getFormat()));
 //    } catch (LineUnavailableException e) {
 //      e.printStackTrace();
 //    }
-    d.addAudioProcessor(new AudioProcessor() {
+//    d.addAudioProcessor(new AudioProcessor() {
+//
+//      @Override
+//      public void processingFinished() {
+//      }
+//
+//      @Override
+//      public boolean process(AudioEvent audioEvent) {
+//        d.setStepSizeAndOverlap(size, overlap);
+//        d.setAudioFloatBuffer(buffer);
+//        audioEvent.setFloatBuffer(buffer);
+//        audioEvent.setOverlap(overlap);
+//        return true;
+//      }
+//    });
 
-      @Override
-      public void processingFinished() {
-      }
 
-      @Override
-      public boolean process(AudioEvent audioEvent) {
-        d.setStepSizeAndOverlap(size, overlap);
-        d.setAudioFloatBuffer(buffer);
-        audioEvent.setFloatBuffer(buffer);
-        audioEvent.setOverlap(overlap);
-        return true;
-      }
-    });
-    dispatcher = d;
-    new Thread(d).start();
+    Thread t = new Thread(dispatcher);
+    t.start();
 
   }
 
@@ -369,26 +347,6 @@ public class PlayerActivity extends AppCompatActivity {
     startActivity(intent);
   }
 
-  @Override
-  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-      @NonNull int[] grantResults) {
-    switch (requestCode) {
-      case MY_PERMISSION_REQUEST: {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-          if (ContextCompat.checkSelfPermission(PlayerActivity.this,
-              permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
-            doStuff();
-          }
-        } else {
-          Toast.makeText(this, "No permission granted", Toast.LENGTH_SHORT).show();
-          finish();
-        }
-        return;
-      }
-    }
-  }
-
   public void getMusic() {
     ContentResolver contentResolver = getContentResolver();
     Uri songUri = Media.EXTERNAL_CONTENT_URI;
@@ -399,6 +357,7 @@ public class PlayerActivity extends AppCompatActivity {
       do {
         arrayList.add(songCursor.getString(songCursor.getColumnIndex("_data")));
 //        titleList.add(songCursor.getString(songCursor.getColumnIndex("_id")));
+        System.out.println(songCursor.getString(songCursor.getColumnIndex("folder_path")));
       } while (songCursor.moveToNext());
     }
   }
@@ -455,13 +414,6 @@ public class PlayerActivity extends AppCompatActivity {
     stopPlayer();
   }
 
-
-  public void setSong(String path) {
-    Log.d(LOG_TAG, "URI is: " + path + " : " + Uri.parse(path) + " : " + android.net.Uri
-        .parse("file://" + path).getPath());
-//    uri = Uri.parse(path);
-  }
-
   @Override
   protected void onResume() {
     super.onResume();
@@ -470,7 +422,6 @@ public class PlayerActivity extends AppCompatActivity {
 
   @Override
   public void onBackPressed() {
-    System.out.println("BackButtonPuhsed");
     finish();
   }
 
