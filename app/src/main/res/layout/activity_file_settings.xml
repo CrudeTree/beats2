@@ -47,29 +47,29 @@
     app:layout_constraintLeft_toLeftOf="parent"
     app:layout_constraintRight_toRightOf="parent"/>
 
+  <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="File Directory"
+    android:textSize="24dp"
+    android:paddingLeft="20dp"
+    android:textStyle="bold"
+    app:layout_constraintTop_toTopOf="@id/file_directory_button"
+    app:layout_constraintBottom_toBottomOf="@id/file_directory_button"
+    app:layout_constraintLeft_toLeftOf="parent"/>
+
   <Button
     android:id="@+id/file_directory_button"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="Choose File Directory"
-    android:textSize="24dp"
+    android:text="Change"
+    android:textSize="16dp"
+    android:paddingRight="20dp"
     android:textColor="#000"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintLeft_toLeftOf="parent"
     app:layout_constraintRight_toRightOf="parent"
     />
 
-  <Button
-    android:id="@+id/save_button"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Save"
-    android:textSize="24dp"
-    android:textColor="#000"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintLeft_toLeftOf="parent"
-    app:layout_constraintRight_toRightOf="parent"
-    android:layout_marginBottom="50dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

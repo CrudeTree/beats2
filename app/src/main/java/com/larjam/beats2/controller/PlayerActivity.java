@@ -1,11 +1,10 @@
 package com.larjam.beats2.controller;
 
-import android.Manifest.permission;
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.media.MediaPlayer;
@@ -15,6 +14,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore.Audio.Media;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
@@ -22,8 +22,6 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
-import android.widget.Toast;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import android.view.View;
@@ -34,7 +32,6 @@ import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
 import be.tarsos.dsp.PitchShifter;
-import be.tarsos.dsp.io.android.AndroidAudioPlayer;
 import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 
@@ -76,8 +73,13 @@ public class PlayerActivity extends AppCompatActivity {
   private Button ic_play;
   private MediaPlayer mp;
   private String path;
+  private String title;
+  private boolean nextSongRequested;
+  private View backColor;
 
-
+  private int redBack;
+  private int blueBack;
+  private int greenBack;
   private int red;
   private int blue;
   private int green;
@@ -94,107 +96,115 @@ public class PlayerActivity extends AppCompatActivity {
 
     listView = findViewById(R.id.listView);
     arrayList = new ArrayList<>();
+    colorPreference();
     getMusic();
     mp = MediaPlayer.create(this, R.raw.click_sound);
     mp.setVolume(0.2f, 0.2f);
-    String title = arrayList.get(0);
     mNextButton = findViewById(R.id.next_button);
     mPlayButton = findViewById(R.id.play);
     seekBar = findViewById(R.id.seek_bar);
-    mPlayButton.setOnClickListener(this::play);
-
-    mNextButton.setOnClickListener(this::nextSong);
-
-    if (extras != null) {
-      songIndex = extras.getInt("songIndex");
-      uri = Uri
-          .parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(songIndex));
-      title = arrayList.get(songIndex);
-      player = MediaPlayer.create(this, uri);
-      if (extras.getBoolean("start")) {
-        player = MediaPlayer.create(this, uri);
-        play(mPlayButton);
-      }
-    } else {
-      uri = Uri.parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(0));
-      player = MediaPlayer.create(this, uri);
-
-//      file = new File(String.valueOf(uri));
-    }
-
-    pitchText = findViewById(R.id.text_pitch);
-    originalTempoText = findViewById(R.id.original_tempo);
-    keepSettingsText = findViewById(R.id.save_settings);
-    displaySongIdentifier = findViewById(R.id.display_song_name);
-    displaySongIdentifier.setText(title);
-
     Toolbar toolbar = findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
-    setupSignIn();
-    viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
-    Log.d(TAG, "onCreate");
+
+    if (arrayList.size() == 0) {
+      displaySongIdentifier.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+      displaySongIdentifier.setTextColor(ContextCompat.getColor(this, R.color.errorColor));
+      displaySongIdentifier.setText("Choose Valid Directory In Settings");
+    } else {
+      mNextButton.setOnClickListener(this::nextSong);
+      mPlayButton.setOnClickListener(this::play);
+      displaySongIdentifier.setText(arrayList.get(0));
+
+      if (extras != null) {
+        songIndex = extras.getInt("songIndex");
+        uri = Uri
+            .parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(songIndex));
+        displaySongIdentifier.setText(arrayList.get(songIndex));
+        player = MediaPlayer.create(this, uri);
+        if (extras.getBoolean("start")) {
+          player = MediaPlayer.create(this, uri);
+          play(mPlayButton);
+        }
+      } else {
+        uri = Uri.parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(0));
+        player = MediaPlayer.create(this, uri);
+
+//      file = new File(String.valueOf(uri));
+      }
+
+      player.setOnPreparedListener(player -> {
+        seekBar.setMax(player.getDuration());
+        changeSeekbar();
+      });
+
+      setupSignIn();
+      viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+      Log.d(TAG, "onCreate");
 
 //    startFile(file);
 
-    colorPreference();
 
-    player.setOnPreparedListener(player -> {
-      seekBar.setMax(player.getDuration());
-      changeSeekbar();
-    });
+      seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
+          if (fromUser) {
+            player.seekTo(i);
+          }
 
-    seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-      @Override
-      public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
-        if (fromUser) {
-          player.seekTo(i);
+          if (!nextSongRequested && seekBar.getProgress() >= player.getDuration() * 0.99) {
+            nextSongRequested = true;
+            seekBar.setProgress(0);
+            songIndex += 1;
+            songIndex %= arrayList.size();
+            File f = new File(arrayList.get(songIndex));
+            Log.d(TAG, "NextSong: " + arrayList.get(songIndex));
+
+            Intent intent = new Intent(PlayerActivity.this, PlayerActivity.class);
+            Bundle extras = new Bundle();
+            extras.putString("title", f.getAbsoluteFile().getName());
+            extras.putInt("songIndex", songIndex);
+            extras.putBoolean("start", true);
+            intent.putExtras(extras);
+            startActivity(intent);
+          }
+
         }
 
-        if (seekBar.getProgress() >= player.getDuration() * 0.98) {
-          seekBar.setProgress(0);
-          songIndex += 1;
-          songIndex %= arrayList.size();
-          File f = new File(arrayList.get(songIndex));
-          Log.d(TAG, "NameOfFile" + f.getAbsoluteFile().getName());
-          Intent intent = new Intent(PlayerActivity.this, PlayerActivity.class);
-          Bundle extras = new Bundle();
-          extras.putString("data", arrayList.get(songIndex));
-          extras.putString("title", f.getAbsoluteFile().getName());
-          extras.putBoolean("start", true);
-          intent.putExtras(extras);
-          startActivity(intent);
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+
         }
 
-      }
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
 
-      @Override
-      public void onStartTrackingTouch(SeekBar seekBar) {
-
-      }
-
-      @Override
-      public void onStopTrackingTouch(SeekBar seekBar) {
-
-      }
-    });
+        }
+      });
+    }
   }
 
   private void colorPreference() {
     SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
-    Editor editor = pref.edit();
+    redBack = pref.getInt("redBack", 50);
+    greenBack = pref.getInt("greenBack", 50);
+    blueBack = pref.getInt("blueBack", 50);
     red = pref.getInt("red", 11);
     green = pref.getInt("green", 60);
     blue = pref.getInt("blue", 73);
-    Log.d(TAG, "GREEN " + green);
     toolbarColor = findViewById(R.id.toolbar);
     appBarColor = findViewById(R.id.appbar);
-
-    originalTempoText.setTextColor(Color.rgb(red, green, blue));
-    keepSettingsText.setTextColor(Color.rgb(red, green, blue));
-    displaySongIdentifier.setTextColor(Color.rgb(red, green, blue));
-    pitchText.setTextColor(Color.rgb(red, green, blue));
     toolbarColor.setBackgroundColor(Color.rgb(red, green, blue));
     appBarColor.setBackgroundColor(Color.rgb(red, green, blue));
+    backColor = findViewById(R.id.main_content);
+    backColor.setBackgroundColor(Color.rgb(redBack, greenBack, blueBack));
+    pitchText = findViewById(R.id.text_pitch);
+    pitchText.setTextColor(Color.rgb(red, green, blue));
+    displaySongIdentifier = findViewById(R.id.display_song_name);
+    displaySongIdentifier.setTextColor(Color.rgb(red, green, blue));
+    originalTempoText = findViewById(R.id.original_tempo);
+    keepSettingsText = findViewById(R.id.save_settings);
+    originalTempoText.setTextColor(Color.rgb(red, green, blue));
+    keepSettingsText.setTextColor(Color.rgb(red, green, blue));
   }
 
 
@@ -286,7 +296,6 @@ public class PlayerActivity extends AppCompatActivity {
 
   private void setupSignIn() {
     signInService = GoogleSignInService.getInstance();
-//    signInService.getAccount().observe(this, (account) -> viewModel.setAccount(account));
   }
 
   private void signOut() {
@@ -300,7 +309,6 @@ public class PlayerActivity extends AppCompatActivity {
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-    // Inflate the menu; this adds items to the action bar if it is present.
     getMenuInflater().inflate(R.menu.menu_main, menu);
     return true;
   }
@@ -328,7 +336,7 @@ public class PlayerActivity extends AppCompatActivity {
   }
 
   public void openSongListActivity() {
-    Intent intent = new Intent(this, SongListActivity.class);
+    Intent intent = new Intent(this, PlaylistActivity.class);
     Bundle extras = new Bundle();
     extras.putInt("songIndex", songIndex);
     intent.putExtras(extras);
@@ -344,29 +352,26 @@ public class PlayerActivity extends AppCompatActivity {
   }
 
   public void getMusic() {
-    ContentResolver contentResolver = getContentResolver();
     SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
-    Uri songUri = Media.EXTERNAL_CONTENT_URI;
-    Log.d(TAG, "getMusic: " + songUri);
-    Cursor songCursor = contentResolver.query(songUri, null, null, null, null);
-
     String fileEdit = pref.getString("FileDirectory", path) + "/";
+    Log.d(TAG, "Is the File Directory?: " + fileEdit);
+//    Log.d(TAG, "Is the getAbsoluteFile: " + file.getAbsoluteFile());
     File f = new File(fileEdit);
 
-    Log.d(TAG, "ThisShouldWork" + f.getAbsoluteFile().getName());
-
     String path =
-        Environment.getExternalStorageDirectory().toString() + "/" + f.getAbsoluteFile().getName();
-    Log.d("Files", "Path: " + path);
+        Environment.getExternalStorageDirectory().toString() + f.getAbsoluteFile();
+    Log.d(TAG, "Path: " + path);
     File directory = new File(path);
-    File[] files = directory.listFiles();
-    Log.d("Files", "Size: " + files.length);
-    for (int i = 0; i < files.length; i++) {
-      Log.d("Files", "FileName:" + files[i].getName());
-
-      arrayList.add(files[i].getName());
-      Log.d(TAG, "Get absolute value  " + f.getAbsolutePath());
+    Log.d(TAG, "PathDirectory: " + directory.toString());
+    Log.d(TAG, "PathGetNameDir:" + directory.getName());
+    File[] files = directory.getAbsoluteFile().listFiles();
+    Log.d(TAG, "PathFiles: " + Arrays.toString(files));
+    if (files != null) {
+      for (int i = 0; i < files.length; i++) {
+        arrayList.add(files[i].getName());
+      }
     }
+
   }
 
   // Plays the song
@@ -388,9 +393,7 @@ public class PlayerActivity extends AppCompatActivity {
     songIndex += 1;
     songIndex %= arrayList.size();
 
-    System.out.println("songindex: " + songIndex);
     File f = new File(arrayList.get(songIndex));
-    System.out.println(arrayList.get(songIndex));
     Intent intent = new Intent(this, PlayerActivity.class);
     Bundle extras = new Bundle();
     extras.putString("title", f.getAbsoluteFile().getName());

@@ -11,6 +11,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.LongDef;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -28,7 +29,6 @@ public class FileSettingsActivity extends AppCompatActivity {
   private static final int MY_PERMISSION_REQUEST = 1;
   private static final String TAG = "FileSettings";
   String path;
-  Button saveButton;
   Button fileDirectoryButton;
   TextView fileText;
   Editor editor;
@@ -64,8 +64,6 @@ public class FileSettingsActivity extends AppCompatActivity {
     Intent intent = getIntent();
     String notFirst = intent.getStringExtra("notFirst");
 
-    Log.d(TAG, "is intent.getExtras empty?   " + notFirst);
-    Log.d(TAG, "is pref empty?   " + pref.getString("FileDirectory", path));
 
     //When you start up the app for the very first time
     if(pref.getString("FileDirectory", path) == null ) {
@@ -85,24 +83,15 @@ public class FileSettingsActivity extends AppCompatActivity {
   }
 
   private void startFileSettings() {
-    saveButton = findViewById(R.id.save_button);
     fileDirectoryButton = findViewById(R.id.file_directory_button);
     fileText = findViewById(R.id.txt_path);
     description = findViewById(R.id.description);
-    Log.d(TAG, "FileText" + fileText);
     SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
 
     if(editor.putString("FileDirectory", path) != null) {
       description.setText("This is your file path: " + pref.getString("FileDirectory", path));
     }
 
-    saveButton.setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        editor.commit();
-        Toast.makeText(FileSettingsActivity.this, "Saved", Toast.LENGTH_SHORT).show();
-      }
-    });
 
     fileDirectoryButton.setOnClickListener(new OnClickListener() {
       @Override
@@ -124,10 +113,13 @@ public class FileSettingsActivity extends AppCompatActivity {
           @Override
           public void onSelect(String path) {
             SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
-
             editor.putString("FileDirectory", path);
-            Log.d(TAG, "GIMME DAT VALUEEEE:    " + path);
-            fileText.setText(pref.getString("FileDirectory", path));
+            editor.commit();
+
+            if(pref.getString("FileDirectory", path) != null) {
+              description.setText("This is your file path: " + pref.getString("FileDirectory", path));
+            }
+            Log.d(TAG, "FileDirectory" + pref.getString("FileDirectory", path));
           }
         });
         chooser.show();
@@ -158,7 +150,6 @@ public class FileSettingsActivity extends AppCompatActivity {
 
   @Override
   public void onBackPressed() {
-    Log.d(TAG, "FileText" + String.valueOf(fileText));
     SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
     if (pref.getString("FileDirectory", path) == null) {
       startActivity(new Intent(this, FileSettingsActivity.class));

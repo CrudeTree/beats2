@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Layout;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -15,6 +16,7 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import com.google.android.material.appbar.AppBarLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -28,14 +30,21 @@ public class BackColorsSettingsActivity extends AppCompatActivity {
   private SeekBar seekBarGreen;
   private AppBarLayout appBarColor;
   private Toolbar toolbarColor;
-  private TextView backColorText;
+  private View backColor;
   private Button saveButton;
+  private int updatedGreenBack;
+  private int updatedRedBack;
+  private int updatedBlueBack;
   private int updatedGreen;
   private int updatedRed;
   private int updatedBlue;
   private int red;
   private int green;
   private int blue;
+  private int redBack;
+  private int greenBack;
+  private int blueBack;
+  private TextView backColorText;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -58,21 +67,20 @@ public class BackColorsSettingsActivity extends AppCompatActivity {
       }
     });
 
-    backColorText = findViewById(R.id.back_colors);
     seekBarRed = findViewById(R.id.seek_bar_red);
     seekBarGreen = findViewById(R.id.seek_bar_green);
     seekBarBlue = findViewById(R.id.seek_bar_blue);
 
-    seekBarRed.setProgress(pref.getInt("redProgress", 50));
-    seekBarGreen.setProgress(pref.getInt("greenProgress", 50));
-    seekBarBlue.setProgress(pref.getInt("blueProgress", 50));
+    seekBarRed.setProgress(pref.getInt("redBackProgress", 50));
+    seekBarGreen.setProgress(pref.getInt("greenBackProgress", 50));
+    seekBarBlue.setProgress(pref.getInt("blueBackProgress", 50));
 
     seekBarRed.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
       @Override
       public void onStopTrackingTouch(SeekBar seekBar) {
-        updatedRed = (int) Math.ceil(254 * (seekBarRed.getProgress() / 100d));
-        editor.putInt("red", updatedRed);
-        editor.putInt("redProgress", seekBarRed.getProgress());
+        updatedRedBack = (int) Math.ceil(254 * (seekBarRed.getProgress() / 100d));
+        editor.putInt("redBack", updatedRedBack);
+        editor.putInt("redBackProgress", seekBarRed.getProgress());
       }
 
       @Override
@@ -83,23 +91,20 @@ public class BackColorsSettingsActivity extends AppCompatActivity {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress,
           boolean fromUser) {
-        toolbarColor = findViewById(R.id.toolbar);
-        appBarColor = findViewById(R.id.appbar);
+        backColor = findViewById(R.id.back_color);
 
-        red = (int) Math.ceil(254 * (seekBarRed.getProgress() / 100d));
+        redBack = (int) Math.ceil(254 * (seekBarRed.getProgress() / 100d));
 
-        backColorText.setTextColor(Color.rgb(red,green,blue));
-        toolbarColor.setBackgroundColor(Color.rgb(red, green, blue));
-        appBarColor.setBackgroundColor(Color.rgb(red, green, blue));
+        backColor.setBackgroundColor(Color.rgb(redBack,greenBack,blueBack));
       }
     });
 
     seekBarGreen.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
       @Override
       public void onStopTrackingTouch(SeekBar seekBar) {
-        updatedGreen = (int) Math.ceil(254 * (seekBar.getProgress() / 100d));
-        editor.putInt("green", updatedGreen);
-        editor.putInt("greenProgress", seekBarGreen.getProgress());
+        updatedGreenBack = (int) Math.ceil(254 * (seekBar.getProgress() / 100d));
+        editor.putInt("greenBack", updatedGreenBack);
+        editor.putInt("greenBackProgress", seekBarGreen.getProgress());
 
       }
 
@@ -111,23 +116,20 @@ public class BackColorsSettingsActivity extends AppCompatActivity {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress,
           boolean fromUser) {
-        toolbarColor = findViewById(R.id.toolbar);
-        appBarColor = findViewById(R.id.appbar);
+        backColor = findViewById(R.id.back_color);
 
-        green = (int) Math.ceil(254 * (seekBarGreen.getProgress() / 100d));
+        greenBack = (int) Math.ceil(254 * (seekBarGreen.getProgress() / 100d));
 
-        backColorText.setTextColor(Color.rgb(red,green,blue));
-        toolbarColor.setBackgroundColor(Color.rgb(red, green, blue));
-        appBarColor.setBackgroundColor(Color.rgb(red, green, blue));
+        backColor.setBackgroundColor(Color.rgb(redBack,greenBack,blueBack));
       }
     });
 
     seekBarBlue.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
       @Override
       public void onStopTrackingTouch(SeekBar seekBar) {
-        updatedBlue = (int) Math.ceil(254 * (seekBar.getProgress() / 100d));
-        editor.putInt("blue", updatedBlue);
-        editor.putInt("blueProgress", seekBarBlue.getProgress());
+        updatedBlueBack = (int) Math.ceil(254 * (seekBar.getProgress() / 100d));
+        editor.putInt("blueBack", updatedBlueBack);
+        editor.putInt("blueBackProgress", seekBarBlue.getProgress());
 
       }
 
@@ -139,21 +141,26 @@ public class BackColorsSettingsActivity extends AppCompatActivity {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress,
           boolean fromUser) {
-        toolbarColor = findViewById(R.id.toolbar);
-        appBarColor = findViewById(R.id.appbar);
+        backColor = findViewById(R.id.back_color);
 
-        blue = (int) Math.ceil(254 * (seekBarBlue.getProgress() / 100d));
+        blueBack = (int) Math.ceil(254 * (seekBarBlue.getProgress() / 100d));
 
-        backColorText.setTextColor(Color.rgb(red,green,blue));
-        toolbarColor.setBackgroundColor(Color.rgb(red, green, blue));
-        appBarColor.setBackgroundColor(Color.rgb(red, green, blue));
+        backColor.setBackgroundColor(Color.rgb(redBack,greenBack,blueBack));
       }
     });
   }
 
   private void colorPreference() {
     SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
-    Editor editor = pref.edit();
+    seekBarRed = findViewById(R.id.seek_bar_red);
+    seekBarGreen = findViewById(R.id.seek_bar_green);
+    seekBarBlue = findViewById(R.id.seek_bar_blue);
+    seekBarRed.setProgress(pref.getInt("redBackProgress", 50));
+    seekBarGreen.setProgress(pref.getInt("greenBackProgress", 50));
+    seekBarBlue.setProgress(pref.getInt("blueBackProgress", 50));
+    redBack = pref.getInt("redBack", 254);
+    greenBack = pref.getInt("greenBack", 254);
+    blueBack = pref.getInt("blueBack", 254);
     red = pref.getInt("red", 11);
     green = pref.getInt("green", 60);
     blue = pref.getInt("blue", 73);
@@ -161,6 +168,10 @@ public class BackColorsSettingsActivity extends AppCompatActivity {
     appBarColor = findViewById(R.id.appbar);
     toolbarColor.setBackgroundColor(Color.rgb(red, green, blue));
     appBarColor.setBackgroundColor(Color.rgb(red, green, blue));
+    backColor = findViewById(R.id.back_color);
+    backColor.setBackgroundColor(Color.rgb(redBack, greenBack, blueBack));
+    backColorText = findViewById(R.id.front_colors);
+    backColorText.setTextColor(Color.rgb(red, green, blue));
   }
 
 

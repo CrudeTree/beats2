@@ -30,12 +30,16 @@ public class FrontColorsSettingsActivity extends AppCompatActivity {
   private Toolbar toolbarColor;
   private TextView frontColorText;
   private Button saveButton;
+  private View backColor;
   private int updatedGreen;
   private int updatedRed;
   private int updatedBlue;
   private int red;
   private int green;
   private int blue;
+  private int redBack;
+  private int greenBack;
+  private int blueBack;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -154,7 +158,9 @@ public class FrontColorsSettingsActivity extends AppCompatActivity {
 
   private void colorPreference() {
     SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
-    Editor editor = pref.edit();
+    redBack = pref.getInt("redBack", 50);
+    greenBack = pref.getInt("greenBack", 50);
+    blueBack = pref.getInt("blueBack", 50);
     red = pref.getInt("red", 11);
     green = pref.getInt("green", 60);
     blue = pref.getInt("blue", 73);
@@ -162,6 +168,8 @@ public class FrontColorsSettingsActivity extends AppCompatActivity {
     appBarColor = findViewById(R.id.appbar);
     toolbarColor.setBackgroundColor(Color.rgb(red, green, blue));
     appBarColor.setBackgroundColor(Color.rgb(red, green, blue));
+    backColor = findViewById(R.id.colors);
+    backColor.setBackgroundColor(Color.rgb(redBack, greenBack, blueBack));
   }
 
 
