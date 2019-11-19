@@ -54,11 +54,13 @@ public class SettingsActivity extends AppCompatActivity {
 
   public void openFileSettingsActivity () {
     Intent intent = new Intent(this, FileSettingsActivity.class);
+    String notFirst = "notFirst";
+    intent.putExtra("notFirst", notFirst);
     startActivity(intent);
   }
 
   public void openBackColorsSettingsActivity () {
-    Intent intent = new Intent(this, FrontColorsSettingsActivity.class);
+    Intent intent = new Intent(this, BackColorsSettingsActivity.class);
     startActivity(intent);
   }
 

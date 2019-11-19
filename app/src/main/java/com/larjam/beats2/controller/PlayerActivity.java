@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore.Audio.Media;
 import android.util.Log;
@@ -74,6 +75,7 @@ public class PlayerActivity extends AppCompatActivity {
   private TextView keepSettingsText;
   private Button ic_play;
   private MediaPlayer mp;
+  private String path;
 
 
   private int red;
@@ -89,9 +91,10 @@ public class PlayerActivity extends AppCompatActivity {
     Intent intent = getIntent();
     listView = findViewById(R.id.listView);
     arrayList = new ArrayList<>();
+    getMusic();
     mp = MediaPlayer.create(this, R.raw.click_sound);
-    mp.setVolume(0.2f,0.2f);
-    String title = "Pumped up Kicks - Foster The People.mp3";
+    mp.setVolume(0.2f, 0.2f);
+    String title = arrayList.get(0);
     mNextButton = findViewById(R.id.next_button);
     mNextButton.setOnClickListener(this::nextSong);
 
@@ -121,7 +124,6 @@ public class PlayerActivity extends AppCompatActivity {
     setSupportActionBar(toolbar);
     mPlayButton = findViewById(R.id.play);
     setupSignIn();
-    getMusic();
     viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
     Log.d(TAG, "onCreate");
 
@@ -225,8 +227,6 @@ public class PlayerActivity extends AppCompatActivity {
     player = MediaPlayer.create(this, uri);
     player.start();
 
-
-
 //    d.addAudioProcessor(new AudioProcessor() {
 //      Resampler r = new Resampler(false, 0.1, 4.0);
 //
@@ -271,7 +271,6 @@ public class PlayerActivity extends AppCompatActivity {
 //        return true;
 //      }
 //    });
-
 
     Thread t = new Thread(dispatcher);
     t.start();
@@ -349,17 +348,29 @@ public class PlayerActivity extends AppCompatActivity {
 
   public void getMusic() {
     ContentResolver contentResolver = getContentResolver();
+    SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
     Uri songUri = Media.EXTERNAL_CONTENT_URI;
+    Log.d(TAG, "getMusic: " + songUri);
     Cursor songCursor = contentResolver.query(songUri, null, null, null, null);
 
-    if (songCursor != null && songCursor.moveToFirst()) {
-      Log.d("SONGLIST", Arrays.toString(songCursor.getColumnNames()));
-      do {
-        arrayList.add(songCursor.getString(songCursor.getColumnIndex("_data")));
-//        titleList.add(songCursor.getString(songCursor.getColumnIndex("_id")));
-        System.out.println(songCursor.getString(songCursor.getColumnIndex("folder_path")));
-      } while (songCursor.moveToNext());
+    String fileEdit = pref.getString("FileDirectory", path) + "/";
+    File f = new File(fileEdit);
+
+    Log.d(TAG, "ThisShouldWork" + f.getAbsoluteFile().getName());
+
+    String path =
+        Environment.getExternalStorageDirectory().toString() + "/" + f.getAbsoluteFile().getName();
+    Log.d("Files", "Path: " + path);
+    File directory = new File(path);
+    File[] files = directory.listFiles();
+    Log.d("Files", "Size: " + files.length);
+    for (int i = 0; i < files.length; i++) {
+      Log.d("Files", "FileName:" + files[i].getName());
+
+      arrayList.add(files[i].getName());
+      Log.d(TAG, "Get absolute value  " + f.getAbsolutePath());
     }
+    System.out.println("YEAHHHHBOI: " + arrayList);
   }
 
   // Plays the song

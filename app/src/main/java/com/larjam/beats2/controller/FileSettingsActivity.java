@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import android.view.View;
 import com.larjam.beats2.R;
+import java.io.File;
 
 public class FileSettingsActivity extends AppCompatActivity {
 
@@ -60,11 +61,26 @@ public class FileSettingsActivity extends AppCompatActivity {
   private void doStuff() {
     SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
     editor = pref.edit();
-    if(pref.getString("FileDirectory", path) == null) {
+    Intent intent = getIntent();
+    String notFirst = intent.getStringExtra("notFirst");
+
+    Log.d(TAG, "is intent.getExtras empty?   " + notFirst);
+    Log.d(TAG, "is pref empty?   " + pref.getString("FileDirectory", path));
+
+    //When you start up the app for the very first time
+    if(pref.getString("FileDirectory", path) == null ) {
       startFileSettings();
-    } else {
-      Intent intent = new Intent(this, PlayerActivity.class);
+    }
+
+    //When you start the app after previously declaring a audio directory
+    if(pref.getString("FileDirectory", path) != null && notFirst == null) {
+      intent = new Intent(this, PlayerActivity.class);
       startActivity(intent);
+    }
+
+    //When you access the audio directory from settings
+    if(pref.getString("FileDirectory", path) != null && notFirst != null) {
+      startFileSettings();
     }
   }
 
@@ -74,6 +90,11 @@ public class FileSettingsActivity extends AppCompatActivity {
     fileText = findViewById(R.id.txt_path);
     description = findViewById(R.id.description);
     Log.d(TAG, "FileText" + fileText);
+    SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
+
+    if(editor.putString("FileDirectory", path) != null) {
+      description.setText("This is your file path: " + pref.getString("FileDirectory", path));
+    }
 
     saveButton.setOnClickListener(new OnClickListener() {
       @Override
@@ -103,7 +124,9 @@ public class FileSettingsActivity extends AppCompatActivity {
           @Override
           public void onSelect(String path) {
             SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
+
             editor.putString("FileDirectory", path);
+            Log.d(TAG, "GIMME DAT VALUEEEE:    " + path);
             fileText.setText(pref.getString("FileDirectory", path));
           }
         });
