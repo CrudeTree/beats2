@@ -86,9 +86,12 @@ public class PlayerActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_player);
+    SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
 
     handler = new Handler();
     Intent intent = getIntent();
+    Bundle extras = intent.getExtras();
+
     listView = findViewById(R.id.listView);
     arrayList = new ArrayList<>();
     getMusic();
@@ -96,23 +99,28 @@ public class PlayerActivity extends AppCompatActivity {
     mp.setVolume(0.2f, 0.2f);
     String title = arrayList.get(0);
     mNextButton = findViewById(R.id.next_button);
+    mPlayButton = findViewById(R.id.play);
+    seekBar = findViewById(R.id.seek_bar);
+    mPlayButton.setOnClickListener(this::play);
+
     mNextButton.setOnClickListener(this::nextSong);
 
-    if (getIntent().getStringExtra("data") != null) {
-      Bundle extras = intent.getExtras();
-      uri = Uri.parse(getIntent().getStringExtra("data"));
-      if (extras != null && extras.getString("title") != null) {
-        title = extras.getString("title");
+    if (extras != null) {
+      songIndex = extras.getInt("songIndex");
+      uri = Uri
+          .parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(songIndex));
+      title = arrayList.get(songIndex);
+      player = MediaPlayer.create(this, uri);
+      if (extras.getBoolean("start")) {
+        player = MediaPlayer.create(this, uri);
+        play(mPlayButton);
       }
     } else {
-      uri = Uri.parse("/storage/emulated/0/MySongList/10,000 pesos.mp3");
-      file = new File(String.valueOf(uri));
-    }
+      uri = Uri.parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(0));
+      player = MediaPlayer.create(this, uri);
 
-//    Log.d(LOG_TAG, "URIValue: " + String.valueOf(file));
-//    Log.d(LOG_TAG, "URILength: " + file.length());
-//    Log.d(LOG_TAG, "URIExist: " + file.exists());
-//    Log.d(LOG_TAG, "URIExecute: " + file.canExecute());
+//      file = new File(String.valueOf(uri));
+    }
 
     pitchText = findViewById(R.id.text_pitch);
     originalTempoText = findViewById(R.id.original_tempo);
@@ -122,13 +130,10 @@ public class PlayerActivity extends AppCompatActivity {
 
     Toolbar toolbar = findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
-    mPlayButton = findViewById(R.id.play);
     setupSignIn();
     viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
     Log.d(TAG, "onCreate");
 
-    player = MediaPlayer.create(this, uri);
-    mPlayButton.setOnClickListener(this::play);
 //    startFile(file);
 
     colorPreference();
@@ -137,7 +142,6 @@ public class PlayerActivity extends AppCompatActivity {
       seekBar.setMax(player.getDuration());
       changeSeekbar();
     });
-    seekBar = findViewById(R.id.seek_bar);
 
     seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
       @Override
@@ -173,13 +177,6 @@ public class PlayerActivity extends AppCompatActivity {
 
       }
     });
-
-    Bundle extras;
-    if ((extras = intent.getExtras()) != null) {
-      if (extras.getBoolean("start")) {
-        play(mPlayButton);
-      }
-    }
   }
 
   private void colorPreference() {
@@ -370,7 +367,6 @@ public class PlayerActivity extends AppCompatActivity {
       arrayList.add(files[i].getName());
       Log.d(TAG, "Get absolute value  " + f.getAbsolutePath());
     }
-    System.out.println("YEAHHHHBOI: " + arrayList);
   }
 
   // Plays the song
@@ -389,15 +385,14 @@ public class PlayerActivity extends AppCompatActivity {
   }
 
   private void nextSong(View view) {
-    mp.start();
     songIndex += 1;
     songIndex %= arrayList.size();
 
+    System.out.println("songindex: " + songIndex);
     File f = new File(arrayList.get(songIndex));
     System.out.println(arrayList.get(songIndex));
     Intent intent = new Intent(this, PlayerActivity.class);
     Bundle extras = new Bundle();
-    extras.putString("data", arrayList.get(songIndex));
     extras.putString("title", f.getAbsoluteFile().getName());
     extras.putInt("songIndex", songIndex);
     extras.putBoolean("start", true);
