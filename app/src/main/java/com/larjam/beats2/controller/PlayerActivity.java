@@ -1,44 +1,32 @@
 package com.larjam.beats2.controller;
 
-import android.Manifest;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.provider.MediaStore.Audio.Media;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Scroller;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import android.view.View;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProviders;
 import be.tarsos.dsp.AudioDispatcher;
-import be.tarsos.dsp.AudioEvent;
-import be.tarsos.dsp.AudioProcessor;
 import be.tarsos.dsp.PitchShifter;
 import be.tarsos.dsp.io.TarsosDSPAudioFormat;
 import be.tarsos.dsp.io.android.AndroidAudioPlayer;
 import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
-
-import be.tarsos.dsp.resample.Resampler;
 import com.google.android.material.appbar.AppBarLayout;
 import com.larjam.beats2.GoogleSignInService;
 import com.larjam.beats2.R;
@@ -47,7 +35,8 @@ import com.sdsmdg.harjot.crollerTest.Croller;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class PlayerActivity extends AppCompatActivity {
 
@@ -86,7 +75,6 @@ public class PlayerActivity extends AppCompatActivity {
   private double currentFactor = 1;
   private TextView pitchValue;
   private double crollerPercent;
-  private Thread t;
 
   private int redBack;
   private int blueBack;
@@ -94,6 +82,9 @@ public class PlayerActivity extends AppCompatActivity {
   private int red;
   private int blue;
   private int green;
+
+  private ExecutorService executorService = Executors.newSingleThreadExecutor();
+  private AudioDispatcher audioDispatcher;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -119,7 +110,6 @@ public class PlayerActivity extends AppCompatActivity {
     seekBar = findViewById(R.id.seek_bar);
     Toolbar toolbar = findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
-
     if (arrayList.size() == 0) {
       displaySongIdentifier.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
       displaySongIdentifier.setTextColor(ContextCompat.getColor(this, R.color.errorColor));
@@ -138,7 +128,7 @@ public class PlayerActivity extends AppCompatActivity {
         player = MediaPlayer.create(this, uri);
         if (extras.getBoolean("start")) {
           file = new File(String.valueOf(uri));
-          startFile(file, mPlayButton);
+//          startFile(file, mPlayButton);
         }
       } else {
         uri = Uri.parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(0));
@@ -187,40 +177,28 @@ public class PlayerActivity extends AppCompatActivity {
     final int overlap = 2048 - 256;
     int samplerate = 44100;
     new AndroidFFMPEGLocator(this);
-    final AudioDispatcher d = AudioDispatcherFactory
+    audioDispatcher = AudioDispatcherFactory
         .fromPipe(file.getAbsolutePath(), samplerate, size, overlap);
+
 
     croller = findViewById(R.id.croller);
     Log.d(TAG, "InitialCurrentFactor: " + currentFactor);
     pitchShifter = new PitchShifter(1, samplerate, size, overlap);
 
-    croller.setOnProgressChangedListener(new Croller.onProgressChangedListener() {
-      @Override
-      public void onProgressChanged(int progress) {
-       currentFactor = croller.getProgress()/1200d;
-       Log.d(TAG, "CurrentFactor: " + currentFactor);
-        pitchShifter.setPitchShiftFactor((float) (1/currentFactor));
-        crollerPercent = croller.getProgress() / 1200d * 100;
-        pitchValue.setText(String.format("%.1f", crollerPercent) + "%");
-      }
+    croller.setOnProgressChangedListener(progress -> {
+      currentFactor = croller.getProgress() / 1200d;
+      Log.d(TAG, "CurrentFactor: " + currentFactor);
+      pitchShifter.setPitchShiftFactor((float) (currentFactor));
+      crollerPercent = croller.getProgress() / 1200d * 100;
+      pitchValue.setText(String.format("%.1f", crollerPercent) + "%");
     });
 
+    audioDispatcher.addAudioProcessor(pitchShifter);
+    audioDispatcher
+        .addAudioProcessor(
+            new AndroidAudioPlayer(new TarsosDSPAudioFormat(samplerate, 16, 1, true, true), 4300,
+                3));
 
-
-    d.addAudioProcessor(pitchShifter);
-    d.addAudioProcessor(new AndroidAudioPlayer(new TarsosDSPAudioFormat(samplerate, 16, 1, true, true), 4300, 3));
-
-    mp.start();
-    if (!isPlay) {
-      v.setBackgroundResource(R.drawable.ic_pause);
-      player.setOnCompletionListener(mediaPlayer -> stopPlayer());
-
-      changeSeekbar();
-    } else {
-      v.setBackgroundResource(R.drawable.ic_play);
-      player.pause();
-    }
-    isPlay = !isPlay;
 
     seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
       @Override
@@ -232,6 +210,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (!nextSongRequested && seekBar.getProgress() >= player.getDuration() * 0.99) {
           nextSongRequested = true;
           seekBar.setProgress(0);
+
           songIndex += 1;
           songIndex %= arrayList.size();
           File f = new File(arrayList.get(songIndex));
@@ -317,10 +296,7 @@ public class PlayerActivity extends AppCompatActivity {
 //      }
 //    });
 
-    Thread t = new Thread(d);
-    t.start();
-
-
+    executorService.submit(audioDispatcher);
 
   }
 
@@ -414,16 +390,33 @@ public class PlayerActivity extends AppCompatActivity {
 
   }
 
-  // Plays the song
   public void play(View v) {
-    file = new File(String.valueOf(uri));
 
-    startFile(file, v);
+    mp.start();
+
+    if (!isPlay) {
+      v.setBackgroundResource(R.drawable.ic_pause);
+      changeSeekbar();
+      file = new File(String.valueOf(uri));
+      startFile(file, v);
+      isPlay = !isPlay;
+
+    } else {
+
+      v.setBackgroundResource(R.drawable.ic_play);
+      dispatcher.stop();
+      isPlay = !isPlay;
+
+    }
+
+
+
   }
 
   private void nextSong(View view) {
     songIndex += 1;
     songIndex %= arrayList.size();
+    audioDispatcher.stop();
 
     File f = new File(arrayList.get(songIndex));
     Intent intent = new Intent(this, PlayerActivity.class);
@@ -466,7 +459,7 @@ public class PlayerActivity extends AppCompatActivity {
   @Override
   protected void onStop() {
     super.onStop();
-    stopPlayer();
+
   }
 
   @Override
