@@ -32,9 +32,12 @@ import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
 import be.tarsos.dsp.PitchShifter;
+import be.tarsos.dsp.io.TarsosDSPAudioFormat;
+import be.tarsos.dsp.io.android.AndroidAudioPlayer;
 import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 
+import be.tarsos.dsp.resample.Resampler;
 import com.google.android.material.appbar.AppBarLayout;
 import com.larjam.beats2.GoogleSignInService;
 import com.larjam.beats2.R;
@@ -51,6 +54,7 @@ public class PlayerActivity extends AppCompatActivity {
   private boolean loop;
   private Button mPlayButton;
   private Button mNextButton;
+  private Button mPreviousButton;
   private MediaPlayer player;
   private MainViewModel viewModel;
   private Uri uri;
@@ -101,6 +105,8 @@ public class PlayerActivity extends AppCompatActivity {
     mp = MediaPlayer.create(this, R.raw.click_sound);
     mp.setVolume(0.2f, 0.2f);
     mNextButton = findViewById(R.id.next_button);
+    mPreviousButton = findViewById(R.id.previous_button);
+
     mPlayButton = findViewById(R.id.play);
     seekBar = findViewById(R.id.seek_bar);
     Toolbar toolbar = findViewById(R.id.toolbar);
@@ -112,6 +118,8 @@ public class PlayerActivity extends AppCompatActivity {
       displaySongIdentifier.setText("Choose Valid Directory In Settings");
     } else {
       mNextButton.setOnClickListener(this::nextSong);
+      mPreviousButton.setOnClickListener(this::previousSong);
+
       mPlayButton.setOnClickListener(this::play);
       displaySongIdentifier.setText(arrayList.get(0));
 
@@ -129,7 +137,6 @@ public class PlayerActivity extends AppCompatActivity {
         uri = Uri.parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(0));
         player = MediaPlayer.create(this, uri);
 
-//      file = new File(String.valueOf(uri));
       }
 
       player.setOnPreparedListener(player -> {
@@ -140,9 +147,6 @@ public class PlayerActivity extends AppCompatActivity {
       setupSignIn();
       viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
       Log.d(TAG, "onCreate");
-
-//    startFile(file);
-
 
       seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
         @Override
@@ -211,28 +215,27 @@ public class PlayerActivity extends AppCompatActivity {
   private void startFile(File file) {
     int currentFactor = 4;
     final int size = 2048;
-    final int overlap = 2048 - 128;
+    final int overlap = 2048 - 256;
     int samplerate = 44100;
     new AndroidFFMPEGLocator(this);
     final AudioDispatcher d = AudioDispatcherFactory
         .fromPipe(file.getAbsolutePath(), samplerate, size, overlap);
-    pitchShifter = new PitchShifter(2, samplerate, size, overlap);
-    pitchShifter.setPitchShiftFactor(2);
-    d.addAudioProcessor(new AudioProcessor() {
-      @Override
-      public void processingFinished() {
-
-      }
-
-      @Override
-      public boolean process(AudioEvent audioEvent) {
-        buffer = audioEvent.getFloatBuffer();
-        return true;
-      }
-    });
-
-    player = MediaPlayer.create(this, uri);
-    player.start();
+    pitchShifter = new PitchShifter(1, samplerate, size, overlap);
+    pitchShifter.setPitchShiftFactor((float) 1);
+    d.addAudioProcessor(pitchShifter);
+    d.addAudioProcessor(new AndroidAudioPlayer(new TarsosDSPAudioFormat(samplerate, 16, 1, true, true), 4300, 3));
+//    d.addAudioProcessor(new AudioProcessor() {
+//      @Override
+//      public void processingFinished() {
+//
+//      }
+//
+//      @Override
+//      public boolean process(AudioEvent audioEvent) {
+//        buffer = audioEvent.getFloatBuffer();
+//        return true;
+//      }
+//  });
 
 //    d.addAudioProcessor(new AudioProcessor() {
 //      Resampler r = new Resampler(false, 0.1, 4.0);
@@ -279,7 +282,7 @@ public class PlayerActivity extends AppCompatActivity {
 //      }
 //    });
 
-    Thread t = new Thread(dispatcher);
+    Thread t = new Thread(d);
     t.start();
 
   }
@@ -358,8 +361,8 @@ public class PlayerActivity extends AppCompatActivity {
 //    Log.d(TAG, "Is the getAbsoluteFile: " + file.getAbsoluteFile());
     File f = new File(fileEdit);
 
-    String path =
-        Environment.getExternalStorageDirectory().toString() + f.getAbsoluteFile();
+    String path = f.getAbsolutePath();
+//        Environment.getExternalStorageDirectory().toString() + f.getAbsoluteFile();
     Log.d(TAG, "Path: " + path);
     File directory = new File(path);
     Log.d(TAG, "PathDirectory: " + directory.toString());
@@ -380,7 +383,11 @@ public class PlayerActivity extends AppCompatActivity {
     if (!isPlay) {
       v.setBackgroundResource(R.drawable.ic_pause);
       player.setOnCompletionListener(mediaPlayer -> stopPlayer());
-      player.start();
+      file = new File(String.valueOf(uri));
+
+      startFile(file);
+
+//      player.start();
       changeSeekbar();
     } else {
       v.setBackgroundResource(R.drawable.ic_play);
@@ -391,6 +398,20 @@ public class PlayerActivity extends AppCompatActivity {
 
   private void nextSong(View view) {
     songIndex += 1;
+    songIndex %= arrayList.size();
+
+    File f = new File(arrayList.get(songIndex));
+    Intent intent = new Intent(this, PlayerActivity.class);
+    Bundle extras = new Bundle();
+    extras.putString("title", f.getAbsoluteFile().getName());
+    extras.putInt("songIndex", songIndex);
+    extras.putBoolean("start", true);
+    intent.putExtras(extras);
+    startActivity(intent);
+  }
+
+  private void previousSong(View view) {
+    songIndex -= 1;
     songIndex %= arrayList.size();
 
     File f = new File(arrayList.get(songIndex));
