@@ -19,6 +19,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Scroller;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
@@ -42,9 +43,11 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.larjam.beats2.GoogleSignInService;
 import com.larjam.beats2.R;
 import com.larjam.beats2.viewmodel.MainViewModel;
+import com.sdsmdg.harjot.crollerTest.Croller;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class PlayerActivity extends AppCompatActivity {
 
@@ -80,6 +83,10 @@ public class PlayerActivity extends AppCompatActivity {
   private String title;
   private boolean nextSongRequested;
   private View backColor;
+  private double currentFactor = 1;
+  private TextView pitchValue;
+  private double crollerPercent;
+  private Thread t;
 
   private int redBack;
   private int blueBack;
@@ -99,6 +106,7 @@ public class PlayerActivity extends AppCompatActivity {
     Bundle extras = intent.getExtras();
 
     listView = findViewById(R.id.listView);
+    pitchValue = findViewById(R.id.pitch_value);
     arrayList = new ArrayList<>();
     colorPreference();
     getMusic();
@@ -119,7 +127,6 @@ public class PlayerActivity extends AppCompatActivity {
     } else {
       mNextButton.setOnClickListener(this::nextSong);
       mPreviousButton.setOnClickListener(this::previousSong);
-
       mPlayButton.setOnClickListener(this::play);
       displaySongIdentifier.setText(arrayList.get(0));
 
@@ -130,13 +137,12 @@ public class PlayerActivity extends AppCompatActivity {
         displaySongIdentifier.setText(arrayList.get(songIndex));
         player = MediaPlayer.create(this, uri);
         if (extras.getBoolean("start")) {
-          player = MediaPlayer.create(this, uri);
-          play(mPlayButton);
+          file = new File(String.valueOf(uri));
+          startFile(file, mPlayButton);
         }
       } else {
         uri = Uri.parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(0));
         player = MediaPlayer.create(this, uri);
-
       }
 
       player.setOnPreparedListener(player -> {
@@ -147,43 +153,6 @@ public class PlayerActivity extends AppCompatActivity {
       setupSignIn();
       viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
       Log.d(TAG, "onCreate");
-
-      seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
-          if (fromUser) {
-            player.seekTo(i);
-          }
-
-          if (!nextSongRequested && seekBar.getProgress() >= player.getDuration() * 0.99) {
-            nextSongRequested = true;
-            seekBar.setProgress(0);
-            songIndex += 1;
-            songIndex %= arrayList.size();
-            File f = new File(arrayList.get(songIndex));
-            Log.d(TAG, "NextSong: " + arrayList.get(songIndex));
-
-            Intent intent = new Intent(PlayerActivity.this, PlayerActivity.class);
-            Bundle extras = new Bundle();
-            extras.putString("title", f.getAbsoluteFile().getName());
-            extras.putInt("songIndex", songIndex);
-            extras.putBoolean("start", true);
-            intent.putExtras(extras);
-            startActivity(intent);
-          }
-
-        }
-
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-
-        }
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-
-        }
-      });
     }
   }
 
@@ -212,18 +181,84 @@ public class PlayerActivity extends AppCompatActivity {
   }
 
 
-  private void startFile(File file) {
-    int currentFactor = 4;
+  private void startFile(File file, View v) {
+    Croller croller;
     final int size = 2048;
     final int overlap = 2048 - 256;
     int samplerate = 44100;
     new AndroidFFMPEGLocator(this);
     final AudioDispatcher d = AudioDispatcherFactory
         .fromPipe(file.getAbsolutePath(), samplerate, size, overlap);
+
+    croller = findViewById(R.id.croller);
+    Log.d(TAG, "InitialCurrentFactor: " + currentFactor);
     pitchShifter = new PitchShifter(1, samplerate, size, overlap);
-    pitchShifter.setPitchShiftFactor((float) 1);
+
+    croller.setOnProgressChangedListener(new Croller.onProgressChangedListener() {
+      @Override
+      public void onProgressChanged(int progress) {
+       currentFactor = croller.getProgress()/1200d;
+       Log.d(TAG, "CurrentFactor: " + currentFactor);
+        pitchShifter.setPitchShiftFactor((float) (1/currentFactor));
+        crollerPercent = croller.getProgress() / 1200d * 100;
+        pitchValue.setText(String.format("%.1f", crollerPercent) + "%");
+      }
+    });
+
+
+
     d.addAudioProcessor(pitchShifter);
     d.addAudioProcessor(new AndroidAudioPlayer(new TarsosDSPAudioFormat(samplerate, 16, 1, true, true), 4300, 3));
+
+    mp.start();
+    if (!isPlay) {
+      v.setBackgroundResource(R.drawable.ic_pause);
+      player.setOnCompletionListener(mediaPlayer -> stopPlayer());
+
+      changeSeekbar();
+    } else {
+      v.setBackgroundResource(R.drawable.ic_play);
+      player.pause();
+    }
+    isPlay = !isPlay;
+
+    seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
+        if (fromUser) {
+          player.seekTo(i);
+        }
+
+        if (!nextSongRequested && seekBar.getProgress() >= player.getDuration() * 0.99) {
+          nextSongRequested = true;
+          seekBar.setProgress(0);
+          songIndex += 1;
+          songIndex %= arrayList.size();
+          File f = new File(arrayList.get(songIndex));
+          Log.d(TAG, "NextSong: " + arrayList.get(songIndex));
+
+          Intent intent = new Intent(PlayerActivity.this, PlayerActivity.class);
+          Bundle extras = new Bundle();
+          extras.putString("title", f.getAbsoluteFile().getName());
+          extras.putInt("songIndex", songIndex);
+          extras.putBoolean("start", true);
+          intent.putExtras(extras);
+          startActivity(intent);
+        }
+
+      }
+
+      @Override
+      public void onStartTrackingTouch(SeekBar seekBar) {
+
+      }
+
+      @Override
+      public void onStopTrackingTouch(SeekBar seekBar) {
+
+      }
+    });
+
 //    d.addAudioProcessor(new AudioProcessor() {
 //      @Override
 //      public void processingFinished() {
@@ -284,6 +319,8 @@ public class PlayerActivity extends AppCompatActivity {
 
     Thread t = new Thread(d);
     t.start();
+
+
 
   }
 
@@ -379,21 +416,9 @@ public class PlayerActivity extends AppCompatActivity {
 
   // Plays the song
   public void play(View v) {
-    mp.start();
-    if (!isPlay) {
-      v.setBackgroundResource(R.drawable.ic_pause);
-      player.setOnCompletionListener(mediaPlayer -> stopPlayer());
-      file = new File(String.valueOf(uri));
+    file = new File(String.valueOf(uri));
 
-      startFile(file);
-
-//      player.start();
-      changeSeekbar();
-    } else {
-      v.setBackgroundResource(R.drawable.ic_play);
-      player.pause();
-    }
-    isPlay = !isPlay;
+    startFile(file, v);
   }
 
   private void nextSong(View view) {

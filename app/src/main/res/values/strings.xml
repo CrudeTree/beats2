@@ -27,4 +27,5 @@
   <string name="title_activity_front_colors_settings">FrontColorsSettingsActivity</string>
   <string name="title_activity_back_colors_settings">BackColorsSettingsActivity</string>
   <string name="title_activity_file_settings">FileSettingsActivity</string>
+  <string name="pitch_percent">$d%</string>
 </resources>

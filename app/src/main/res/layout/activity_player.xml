@@ -43,14 +43,23 @@
     app:label=""
     app:label_color="#0B3C49"
     app:main_circle_color="#EEEEEE"
-    app:max="59"
-    app:progress="30"
+    app:max="2400"
+    app:progress="1200"
     android:rotation="0"
     app:progress_primary_color="#0B3C49"
     app:progress_secondary_stroke_width="8"
     app:progress_secondary_color="#00FF00"
     app:start_offset="20"
     />
+
+  <TextView
+    android:id="@+id/pitch_value"
+    android:layout_width="wrap_content"
+    android:text="@string/pitch_percent"
+    android:layout_height="wrap_content"
+    app:layout_constraintTop_toBottomOf="@id/text_pitch"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"/>
 
   <Button
     android:id="@+id/play"
