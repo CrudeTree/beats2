@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.Switch;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -23,6 +24,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProviders;
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.PitchShifter;
+import be.tarsos.dsp.WaveformSimilarityBasedOverlapAdd;
 import be.tarsos.dsp.io.TarsosDSPAudioFormat;
 import be.tarsos.dsp.io.android.AndroidAudioPlayer;
 import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
@@ -41,8 +43,10 @@ import java.util.concurrent.Executors;
 public class PlayerActivity extends AppCompatActivity {
 
   private static final String TAG = "PlayerActivity";
+  public static AudioDispatcher audioDispatcher;
+  public static boolean isPlay;
   private GoogleSignInService signInService;
-  private boolean isPlay = false;
+  //  private boolean isPlay = false;
   private boolean loop;
   private Button mPlayButton;
   private Button mNextButton;
@@ -75,6 +79,8 @@ public class PlayerActivity extends AppCompatActivity {
   private double currentFactor = 1;
   private TextView pitchValue;
   private double crollerPercent;
+  private WaveformSimilarityBasedOverlapAdd wsola;
+  private Switch originalTempoSwitch;
 
   private int redBack;
   private int blueBack;
@@ -84,7 +90,7 @@ public class PlayerActivity extends AppCompatActivity {
   private int green;
 
   private ExecutorService executorService = Executors.newSingleThreadExecutor();
-  private AudioDispatcher audioDispatcher;
+//  private AudioDispatcher audioDispatcher;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -95,9 +101,10 @@ public class PlayerActivity extends AppCompatActivity {
     handler = new Handler();
     Intent intent = getIntent();
     Bundle extras = intent.getExtras();
-
+    originalTempoSwitch = findViewById(R.id.original_tempo);
     listView = findViewById(R.id.listView);
     pitchValue = findViewById(R.id.pitch_value);
+    pitchValue.setText("100%");
     arrayList = new ArrayList<>();
     colorPreference();
     getMusic();
@@ -125,7 +132,6 @@ public class PlayerActivity extends AppCompatActivity {
         uri = Uri
             .parse(pref.getString("FileDirectory", path) + "/" + arrayList.get(songIndex));
         displaySongIdentifier.setText(arrayList.get(songIndex));
-        player = MediaPlayer.create(this, uri);
         if (extras.getBoolean("start")) {
           file = new File(String.valueOf(uri));
 //          startFile(file, mPlayButton);
@@ -135,10 +141,10 @@ public class PlayerActivity extends AppCompatActivity {
         player = MediaPlayer.create(this, uri);
       }
 
-      player.setOnPreparedListener(player -> {
-        seekBar.setMax(player.getDuration());
-        changeSeekbar();
-      });
+//      player.setOnPreparedListener(player -> {
+//        seekBar.setMax(player.getDuration());
+//        changeSeekbar();
+//      });
 
       setupSignIn();
       viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
@@ -174,12 +180,11 @@ public class PlayerActivity extends AppCompatActivity {
   private void startFile(File file, View v) {
     Croller croller;
     final int size = 2048;
-    final int overlap = 2048 - 256;
+    final int overlap = 2048 - 128 * 2;
     int samplerate = 44100;
     new AndroidFFMPEGLocator(this);
     audioDispatcher = AudioDispatcherFactory
         .fromPipe(file.getAbsolutePath(), samplerate, size, overlap);
-
 
     croller = findViewById(R.id.croller);
     Log.d(TAG, "InitialCurrentFactor: " + currentFactor);
@@ -191,12 +196,13 @@ public class PlayerActivity extends AppCompatActivity {
       pitchShifter.setPitchShiftFactor((float) (currentFactor));
       crollerPercent = croller.getProgress() / 1200d * 100;
       pitchValue.setText(String.format("%.1f", crollerPercent) + "%");
+
     });
 
     audioDispatcher.addAudioProcessor(pitchShifter);
     audioDispatcher
         .addAudioProcessor(
-            new AndroidAudioPlayer(new TarsosDSPAudioFormat(samplerate, 16, 1, true, true), 4300,
+            new AndroidAudioPlayer(new TarsosDSPAudioFormat(samplerate, 16, 1, true, true), 4800,
                 3));
 
 
@@ -249,9 +255,9 @@ public class PlayerActivity extends AppCompatActivity {
 //        buffer = audioEvent.getFloatBuffer();
 //        return true;
 //      }
-//  });
+//  });`
 
-//    d.addAudioProcessor(new AudioProcessor() {
+//    audioDispatcher.addAudioProcessor(new AudioProcessor() {
 //      Resampler r = new Resampler(false, 0.1, 4.0);
 //
 //      @Override
@@ -274,6 +280,7 @@ public class PlayerActivity extends AppCompatActivity {
 //        return true;
 //      }
 //    });
+
 //    d.addAudioProcessor(rateTransposer);
 //    try {
 //      d.addAudioProcessor(new AudioPlayer(d.getFormat()));
@@ -335,7 +342,7 @@ public class PlayerActivity extends AppCompatActivity {
     switch (item.getItemId()) {
       case R.id.playlist:
         mp.start();
-        openSongListActivity();
+        openPlaylistActivity();
         break;
       case R.id.sign_out:
         mp.start();
@@ -351,7 +358,7 @@ public class PlayerActivity extends AppCompatActivity {
     return handled;
   }
 
-  public void openSongListActivity() {
+  public void openPlaylistActivity() {
     Intent intent = new Intent(this, PlaylistActivity.class);
     Bundle extras = new Bundle();
     extras.putInt("songIndex", songIndex);
@@ -409,6 +416,7 @@ public class PlayerActivity extends AppCompatActivity {
     songIndex %= arrayList.size();
     if (isPlay) {
       audioDispatcher.stop();
+      isPlay = !isPlay;
     }
 
     Log.d(TAG, "SongIndexxx: " + songIndex);

@@ -1,29 +1,16 @@
 package com.larjam.beats2.controller;
 
-import android.Manifest.permission;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore.Audio.Media;
-import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProviders;
 import com.larjam.beats2.R;
 import com.larjam.beats2.viewmodel.MainViewModel;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class PlaylistActivity extends FragmentActivity {
 
@@ -34,12 +21,15 @@ public class PlaylistActivity extends FragmentActivity {
   private MainViewModel viewModel;
   private int songIndex;
   private String path;
-
+  private Intent intent;
+  private Bundle extras;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_song_list);
+    intent = getIntent();
+    songIndex = intent.getIntExtra("songIndex", songIndex);
 
     viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
 
@@ -50,11 +40,14 @@ public class PlaylistActivity extends FragmentActivity {
     listView.setAdapter(adapter);
 
     listView.setOnItemClickListener((adapterView, view, i, l) -> {
-      File f = new File(adapterView.getItemAtPosition(i).toString());
+      if (PlayerActivity.isPlay) {
+        PlayerActivity.audioDispatcher.stop();
+        PlayerActivity.isPlay = !PlayerActivity.isPlay;
+      }
       songIndex = i;
       Intent intent = new Intent(this, PlayerActivity.class);
       Bundle extras = new Bundle();
-      extras.putString("title", f.getAbsoluteFile().getName());
+      extras.putString("title", arrayList.get(i));
       extras.putInt("songIndex", songIndex);
       intent.putExtras(extras);
       startActivity(intent);
@@ -65,12 +58,13 @@ public class PlaylistActivity extends FragmentActivity {
     SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
     String fileEdit = pref.getString("FileDirectory", path) + "/";
     File f = new File(fileEdit);
-    String path =
-        Environment.getExternalStorageDirectory().toString() + "/" + f.getAbsoluteFile().getName();
+    String path = f.getAbsolutePath();
     File directory = new File(path);
-    File[] files = directory.listFiles();
-    for (int i = 0; i < files.length; i++) {
-      arrayList.add(files[i].getName());
+    File[] files = directory.getAbsoluteFile().listFiles();
+    if (files != null) {
+      for (int i = 0; i < files.length; i++) {
+        arrayList.add(files[i].getName());
+      }
     }
   }
 
@@ -78,12 +72,9 @@ public class PlaylistActivity extends FragmentActivity {
   @Override
   public void onBackPressed() {
     Intent intent = new Intent(this, PlayerActivity.class);
-    Bundle extras = intent.getExtras();
-    if (extras != null) {
-      songIndex = extras.getInt("songIndex", songIndex);
-    }
 
     intent.putExtra("songIndex", songIndex);
     startActivity(new Intent(this, PlayerActivity.class));
+
   }
 }
