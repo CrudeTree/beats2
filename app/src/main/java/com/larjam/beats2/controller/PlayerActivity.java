@@ -371,11 +371,9 @@ public class PlayerActivity extends AppCompatActivity {
     SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", 0);
     String fileEdit = pref.getString("FileDirectory", path) + "/";
     Log.d(TAG, "Is the File Directory?: " + fileEdit);
-//    Log.d(TAG, "Is the getAbsoluteFile: " + file.getAbsoluteFile());
     File f = new File(fileEdit);
 
     String path = f.getAbsolutePath();
-//        Environment.getExternalStorageDirectory().toString() + f.getAbsoluteFile();
     Log.d(TAG, "Path: " + path);
     File directory = new File(path);
     Log.d(TAG, "PathDirectory: " + directory.toString());
@@ -391,32 +389,29 @@ public class PlayerActivity extends AppCompatActivity {
   }
 
   public void play(View v) {
-
     mp.start();
-
     if (!isPlay) {
       v.setBackgroundResource(R.drawable.ic_pause);
       changeSeekbar();
       file = new File(String.valueOf(uri));
       startFile(file, v);
       isPlay = !isPlay;
-
     } else {
-
       v.setBackgroundResource(R.drawable.ic_play);
-      dispatcher.stop();
+      audioDispatcher.stop();
       isPlay = !isPlay;
-
     }
-
-
 
   }
 
   private void nextSong(View view) {
     songIndex += 1;
     songIndex %= arrayList.size();
-    audioDispatcher.stop();
+    if (isPlay) {
+      audioDispatcher.stop();
+    }
+
+    Log.d(TAG, "SongIndexxx: " + songIndex);
 
     File f = new File(arrayList.get(songIndex));
     Intent intent = new Intent(this, PlayerActivity.class);
@@ -444,14 +439,14 @@ public class PlayerActivity extends AppCompatActivity {
 
   public void pause(View v) {
     if (player != null) {
-      player.pause();
+      audioDispatcher.stop();
     }
   }
 
 
   private void stopPlayer() {
     if (player != null) {
-      player.release();
+      audioDispatcher.stop();
       player = null;
     }
   }
